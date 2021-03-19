@@ -1,7 +1,8 @@
 import unittest
+import os
 import strategoutil as sutil
 
-class TestStrategoUtils(unittest.TestCase):
+class TestUtil(unittest.TestCase):
 
     def test_get_int_tuples_give_single_variable_simulate(self):
         verifyta_output =  """
@@ -24,5 +25,60 @@ class TestStrategoUtils(unittest.TestCase):
         result = sutil.get_duration_action(input_case)
         expected = [(4, 0), (13, 1), (8, 0), (11, 1)]
         self.assertListEqual(result, expected)
+
+    def test_array_to_stratego(self):
+        str_array_in = str([0, 1, 2, 3, 4])
+        str_array_out = sutil.array_to_stratego(str_array_in)
+        self.assertEqual(str_array_out, "{0, 1, 2, 3, 4}")
+
+    def test_merge_verifyta_args_given_empty(self):
+        dict_input = {}
+        result = sutil.merge_verifyta_args(dict_input)
+        self.assertEqual(result, "")
+
+    def test_merge_verifyta_args_given_arbitrary(self):
+            dict_input = {
+                "learning-method": "4",
+                "good-runs": "100",
+                "total-runs": "100",
+                "runs-pr-state": "100",
+                "eval-runs": "100",
+                "max-iterations": "30",
+                "filter": "0"
+            }
+            result = sutil.merge_verifyta_args(dict_input)
+            expected = ("--learning-method 4 --good-runs 100 --total-runs 100 "
+            "--runs-pr-state 100 --eval-runs 100 --max-iterations 30 --filter 0")
+            self.assertEqual(result, expected)
+
+class TestFileInteraction(unittest.TestCase):
+    def setUp(self):
+        """build dummy modelfiles
+        """
+        self.modelfile = "modelfile.xml"
+        with open(self.modelfile, "w") as fin:
+            fin.write(
+            """
+            some important definitions
+            int important_variable_X = //TAG_X; 
+            some more important definitions
+            """)
+
+    def tearDown(self):
+        """remove modelfile
+        """
+        os.remove(self.modelfile)
+
+    def test_insert_to_modelfile(self):
+        tag = "//TAG_X"
+        variable = "42"
+        sutil.insert_to_modelfile(self.modelfile, tag, variable)
+
+        with open(self.modelfile, "r") as fin:
+            correct_substitution = "int important_variable_X = 42;" in fin.read()
+            self.assertTrue(correct_substitution)
+
+
+
 
 
