@@ -79,6 +79,7 @@ class TestUtil(unittest.TestCase):
             expected = ("verifyta model.xml query.q --learning-method 4 "
             "--good-runs 100 --total-runs 100 --runs-pr-state 100 --eval-runs 100 " 
             "--max-iterations 30 --filter 0")
+            print(mock_Popen.call_args.args)
             self.assertTrue(expected in mock_Popen.call_args.args)
 
 class TestFileInteraction(unittest.TestCase):
