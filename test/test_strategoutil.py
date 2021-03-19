@@ -53,21 +53,19 @@ class TestUtil(unittest.TestCase):
             self.assertEqual(result, expected)
 
     def test_run_stratego_model_only(self):
-        with mock.patch("strategoutil.subprocess.Popen") as mock_subprocess_popen:
+        with mock.patch("strategoutil.subprocess.Popen") as mock_Popen:
             sutil.run_stratego("model.xml", verifyta_path="$HOME/verifyta")
             expected = "$HOME/verifyta model.xml"
-            kwargs = {"shell": True, "stdout":-1, "stderr": -1}
-            mock_subprocess_popen.assert_called_with(expected, **kwargs)
+            self.assertTrue(expected in mock_Popen.call_args.args)
 
     def test_run_stratego_model_and_query(self):
-        with mock.patch("strategoutil.subprocess.Popen") as mock_subprocess_popen:
+        with mock.patch("strategoutil.subprocess.Popen") as mock_Popen:
             sutil.run_stratego("model.xml", "query.q")
             expected = "verifyta model.xml query.q"
-            kwargs = {"shell": True, "stdout":-1, "stderr": -1}
-            mock_subprocess_popen.assert_called_with(expected, **kwargs)
+            self.assertTrue(expected in mock_Popen.call_args.args)
 
     def test_run_stratego_all_variables(self):
-        with mock.patch("strategoutil.subprocess.Popen") as mock_subprocess_popen:
+        with mock.patch("strategoutil.subprocess.Popen") as mock_Popen:
             learning_args = {
                 "learning-method": "4",
                 "good-runs": "100",
@@ -81,8 +79,7 @@ class TestUtil(unittest.TestCase):
             expected = ("verifyta model.xml query.q --learning-method 4 "
             "--good-runs 100 --total-runs 100 --runs-pr-state 100 --eval-runs 100 " 
             "--max-iterations 30 --filter 0")
-            kwargs = {"shell": True, "stdout":-1, "stderr": -1}
-            mock_subprocess_popen.assert_called_with(expected, **kwargs)
+            self.assertTrue(expected in mock_Popen.call_args.args)
 
 class TestFileInteraction(unittest.TestCase):
     def setUp(self):

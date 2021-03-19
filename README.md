@@ -13,7 +13,7 @@ Utility functions to interface UPPAAL Stratego with python
 ```sh
 git clone https://github.com/mihsamusev/strategoutil.git
 cd strategoutil
-pip install .
+pip install -e .
 ```
 
 2) Run tests, successful passing of all tests does not depend on having `verifyta` installed on your machine.

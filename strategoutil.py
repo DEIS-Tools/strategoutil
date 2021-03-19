@@ -56,7 +56,11 @@ def merge_verifyta_args(cfg_dict):
         args += " --" + k + " " + str(v)
     return args[1:]
 
-def run_stratego(modelfile, queryfile="", learning_args={}, verifyta_path="verifyta"):
+def run_stratego(
+    modelfile, 
+    queryfile="", 
+    learning_args={}, 
+    verifyta_path="verifyta"):
     """
     Usage: verifyta.bin [OPTION]... MODEL QUERY
     modelfile .xml
