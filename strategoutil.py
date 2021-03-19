@@ -1,4 +1,6 @@
 import re
+import subprocess
+import yaml 
 
 def get_int_tuples(text):
     """converts stratego simulation output to list of tuples
@@ -53,3 +55,28 @@ def merge_verifyta_args(cfg_dict):
     for k, v in cfg_dict.items():
         args += " --" + k + " " + str(v)
     return args[1:]
+
+def run_stratego(modelfile, queryfile="", learning_args={}, verifyta_path="verifyta"):
+    """
+    Usage: verifyta.bin [OPTION]... MODEL QUERY
+    modelfile .xml
+    query .q
+    configfile .yaml with entries of the same format as verifyta arguments
+    """
+    args = {
+        "verifyta": verifyta_path,
+        "model": modelfile,
+        "query": queryfile,
+        "config": merge_verifyta_args(learning_args)
+    }
+    args_list = [v for v in args.values() if v != ""]
+    task = " ".join(args_list)
+
+    process = subprocess.Popen(task, shell=True,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = process.communicate()
+    result = [r.decode("utf-8") for r in result]
+    return result
+
+if __name__ == '__main__':
+    pass

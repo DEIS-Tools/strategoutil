@@ -1,4 +1,5 @@
 import unittest
+from unittest import mock
 import os
 import strategoutil as sutil
 
@@ -50,6 +51,38 @@ class TestUtil(unittest.TestCase):
             expected = ("--learning-method 4 --good-runs 100 --total-runs 100 "
             "--runs-pr-state 100 --eval-runs 100 --max-iterations 30 --filter 0")
             self.assertEqual(result, expected)
+
+    def test_run_stratego_model_only(self):
+        with mock.patch("strategoutil.subprocess.Popen") as mock_subprocess_popen:
+            sutil.run_stratego("model.xml", verifyta_path="$HOME/verifyta")
+            expected = "$HOME/verifyta model.xml"
+            kwargs = {"shell": True, "stdout":-1, "stderr": -1}
+            mock_subprocess_popen.assert_called_with(expected, **kwargs)
+
+    def test_run_stratego_model_and_query(self):
+        with mock.patch("strategoutil.subprocess.Popen") as mock_subprocess_popen:
+            sutil.run_stratego("model.xml", "query.q")
+            expected = "verifyta model.xml query.q"
+            kwargs = {"shell": True, "stdout":-1, "stderr": -1}
+            mock_subprocess_popen.assert_called_with(expected, **kwargs)
+
+    def test_run_stratego_all_variables(self):
+        with mock.patch("strategoutil.subprocess.Popen") as mock_subprocess_popen:
+            learning_args = {
+                "learning-method": "4",
+                "good-runs": "100",
+                "total-runs": "100",
+                "runs-pr-state": "100",
+                "eval-runs": "100",
+                "max-iterations": "30",
+                "filter": "0"
+            }
+            sutil.run_stratego("model.xml", "query.q", learning_args, "verifyta")
+            expected = ("verifyta model.xml query.q --learning-method 4 "
+            "--good-runs 100 --total-runs 100 --runs-pr-state 100 --eval-runs 100 " 
+            "--max-iterations 30 --filter 0")
+            kwargs = {"shell": True, "stdout":-1, "stderr": -1}
+            mock_subprocess_popen.assert_called_with(expected, **kwargs)
 
 class TestFileInteraction(unittest.TestCase):
     def setUp(self):
