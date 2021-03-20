@@ -5,12 +5,7 @@ Utility functions to interface UPPAAL Stratego with python
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/mihsamusev/strategoutil)
 [![badge](https://github.com/mihsamusev/strategoutil/workflows/build/badge.svg)](https://github.com/mihsamusev/strategoutil/actions)
 
-
-### TODO:
-- Travis
-- Testing run on push?
-- gitmodules to be able to install it with other things
-- setup py installs requirements
+See which OS and Python versions combinations are supported [here](https://github.com/mihsamusev/strategoutil/actions).
 
 ## Getting started
  1) Clone and install `strategoutil` to your environment

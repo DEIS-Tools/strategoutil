@@ -1,4 +1,4 @@
-name: build
+name: build-and-test-crossplatform
 on: [push, pull_request]
 jobs:
   build:
