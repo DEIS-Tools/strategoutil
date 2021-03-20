@@ -1,11 +1,11 @@
-name: Build and Test [Python 3.6, 3.7, 3.8, 3.9]
+name: cross-platform-build-and-test
 on: [push, pull_request]
 jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: [3.6, 3.8]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [3.6, 3.7, 3.8]
     runs-on: ${{ matrix.os }}
     steps:
       # to allow githoub to checkout our repository and access it for testing

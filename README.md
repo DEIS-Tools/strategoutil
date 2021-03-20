@@ -1,6 +1,8 @@
 # strategoutil
 Utility functions to interface UPPAAL Stratego with python
 
+## Repo status
+[GitHub](https://img.shields.io/github/languages/code-size/mihsamusev/strategoutil)
 ### TODO:
 - Travis
 - Testing run on push?
