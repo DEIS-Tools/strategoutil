@@ -1,5 +1,7 @@
 import re
 import subprocess
+import shutil
+import os
 import yaml 
 
 def get_int_tuples(text):
@@ -81,6 +83,56 @@ def run_stratego(
     result = process.communicate()
     result = [r.decode("utf-8") for r in result]
     return result
+
+class StrategoController:
+    """
+    Abstract controller class to interface with UPPAAL Stratego 
+    through python
+    """
+    def __init__(self, templatefile, cleanup=True):
+        self.templatefile = templatefile
+        self.simulationfile = templatefile.replace(".xml","_sim.xml")
+        self.cleanup = cleanup
+
+    def init_simfile(self):
+        """
+        Make a copy of a template file where data of
+        specific variables is inserted
+        """
+        shutil.copyfile(self.templatefile, self.simulationfile)
+
+    def remove_simfile(self):
+        """Clean created temporary files after the simulation is finished
+        """
+        os.remove(self.simulationfile)       
+
+    def debug_copy(self, debugFilename):
+        """
+        copy UPPAAL simulationfile.xml file for manual
+        debug in Stratego
+        """
+        shutil.copyfile(self.simulationfile, debugFilename)
+
+    def insert_state(self):
+        """
+        insert  
+        """
+        pass
+
+    def run(self, 
+        queryfile="", 
+        learning_args={}, 
+        verifyta_path="verifyta"):
+        """
+        runs verifyta with requested querries and parameters
+        that are either part of the *.xml model file or explicitly
+        specified  
+        """
+        output = run_stratego(self.simulationfile, queryfile,
+            learning_args, verifyta_path)
+        if self.cleanup:
+            self.remove_simfile()
+        return output[0]
 
 if __name__ == '__main__':
     pass

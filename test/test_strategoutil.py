@@ -6,7 +6,7 @@ import strategoutil as sutil
 class TestUtil(unittest.TestCase):
     POPEN_KWARGS = {"shell": True, "stdout":-1, "stderr":-1}
 
-    def test_get_int_tuples_give_single_variable_simulate(self):
+    def test_get_int_tuples_given_single_variable_simulate(self):
         verifyta_output =  """
         -- Formula is satisfied.
         phase:
