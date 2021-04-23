@@ -108,7 +108,7 @@ def merge_verifyta_args(cfg_dict):
 
 
 def run_stratego(modelfile, queryfile="", learning_args={},
-                 verifyta_path="verifyta"):
+                 verifyta_path="verifyta", interactive_bash=True):
     """
     Usage: verifyta.bin [OPTION]... MODEL QUERY
     modelfile .xml
@@ -124,12 +124,17 @@ def run_stratego(modelfile, queryfile="", learning_args={},
     args_list = [v for v in args.values() if v != ""]
     task = " ".join(args_list)
 
-    #process = subprocess.Popen(task, shell=True,
-    #                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # This second version of the call ensures that the bash shell is started in interactive
-    # mode, thus using any aliases and path variable extensions defined in .bashrc.
-    process = subprocess.Popen(['/bin/bash', '-i', '-c', task],
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if interactive_bash:
+        # This version of the call ensures that the bash shell is started in
+        # interactive mode, thus using any aliases and path variable extensions
+        # defined in the user's .bashrc file.
+        process = subprocess.Popen(['/bin/bash', '-i', '-c', task],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    else:
+        # This version of the call runs Uppaal Stratego using the Popen default shell.
+        process = subprocess.Popen(task, shell=True, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+
     result = process.communicate()
     result = [r.decode("utf-8") for r in result]
     return result
@@ -140,12 +145,13 @@ class StrategoController:
     Controller class to interface with UPPAAL Stratego
     through python.
     """
-
-    def __init__(self, modeltemplatefile, model_cfg_dict, cleanup=True):
+    def __init__(self, modeltemplatefile, model_cfg_dict, cleanup=True,
+                 interactive_bash=True):
         self.templatefile = modeltemplatefile
         self.simulationfile = modeltemplatefile.replace(".xml", "_sim.xml")
         self.cleanup = cleanup
         self.states = model_cfg_dict
+        self.interactive_bash = interactive_bash
         self.tagRule = "//TAG_{}"
 
     def init_simfile(self):
@@ -219,7 +225,7 @@ class StrategoController:
         specified.
         """
         output = run_stratego(self.simulationfile, queryfile,
-                              learning_args, verifyta_path)
+                              learning_args, verifyta_path, self.interactive_bash)
         if self.cleanup:
             self.remove_simfile()
         return output[0]
@@ -230,7 +236,8 @@ class MPCsetup():
     Class that performs the basic MPC scheme for Uppaal Stratego.
     """
     def __init__(self, modeltemplatefile, queryfile="", model_cfg_dict={},
-                 learning_args={}, verifytacommand="verifyta", debug=False):
+                 learning_args={}, verifytacommand="verifyta", debug=False,
+                 interactive_bash=True):
         self.modeltemplatefile = modeltemplatefile
         self.queryfile = queryfile
         self.model_cfg_dict = model_cfg_dict
@@ -238,7 +245,8 @@ class MPCsetup():
         self.verifytacommand = verifytacommand
         self.debug = debug
         self.controller = StrategoController(self.modeltemplatefile,
-                                             self.model_cfg_dict)
+                                             self.model_cfg_dict,
+                                             interactive_bash=interactive_bash)
 
     def run(self, controlperiod, horizon, duration):
         """
