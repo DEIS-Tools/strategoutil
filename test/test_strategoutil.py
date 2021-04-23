@@ -3,11 +3,12 @@ from unittest import mock
 import os
 import strategoutil as sutil
 
+
 class TestUtil(unittest.TestCase):
-    POPEN_KWARGS = {"shell": True, "stdout":-1, "stderr":-1}
+    POPEN_KWARGS = {"shell": True, "stdout": -1, "stderr": -1}
 
     def test_get_int_tuples_given_single_variable_simulate(self):
-        verifyta_output =  """
+        verifyta_output = """
         -- Formula is satisfied.
         phase:
         [0]: (0,0) (4,0) (4,1) (17,1) (17,0) (25,0) (25,1) (36,1)
@@ -82,9 +83,11 @@ class TestUtil(unittest.TestCase):
             "--max-iterations 30 --filter 0")
             mock_Popen.assert_called_with(expected, **self.POPEN_KWARGS)
 
+
 class TestFileInteraction(unittest.TestCase):
     def setUp(self):
-        """build dummy modelfiles
+        """
+        Build dummy model files.
         """
         self.modelfile = "modelfile.xml"
         with open(self.modelfile, "w") as fin:
@@ -96,7 +99,8 @@ class TestFileInteraction(unittest.TestCase):
             """)
 
     def tearDown(self):
-        """remove modelfile
+        """
+        Remove model file.
         """
         os.remove(self.modelfile)
 
@@ -108,8 +112,3 @@ class TestFileInteraction(unittest.TestCase):
         with open(self.modelfile, "r") as fin:
             correct_substitution = "int important_variable_X = 42;" in fin.read()
             self.assertTrue(correct_substitution)
-
-
-
-
-

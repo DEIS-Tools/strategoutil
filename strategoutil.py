@@ -2,7 +2,7 @@ import re
 import subprocess
 import shutil
 import os
-import yaml 
+import yaml
 
 
 def get_int_tuples(text):
@@ -15,18 +15,37 @@ def get_int_tuples(text):
     return int_tuples
 
 
-def get_initial_states(model_config_file):
+def get_float_tuples(text):
     """
-    Get the names of the variables that will be replaced each
-    step with updated values and their initial states from the
-    supplied configuration file.
+    Convert Stratego simulation output to list of tuples
+    (float, float).
     """
-    result = {}
-    with open(model_config_file, "r") as yamlfile:
-        cfg = yaml.safe_load(yamlfile)
-        for k, v in cfg.items():
-            result.update({k: v})
-    return result
+    float_re = r"([-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
+    pattern = r"\(" + float_re + "," + float_re + "\)"
+    string_tuples = re.findall(pattern, text)
+    float_tuples = [(float(t[0]), float(t[4])) for t in string_tuples]
+    return float_tuples
+
+
+def extract_state(text, var, controlperiod):
+    """
+    Extract the state from the Uppaal Stratego output at the end of the simulated
+    control period.
+    """
+    float_re = "[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?"
+    pattern = var + ":\n\[0\]:( \(" + float_re + "," + float_re + "\))*"
+    result = re.search(pattern, text)
+    float_tuples = get_float_tuples(result.group())
+    x, y = 0.0, 0.0
+    lastvalue = 0.0
+    p = 1
+    for t in float_tuples:
+        while p * controlperiod < t[0]:
+            lastvalue = y + (p * controlperiod - x) * (t[1] - y) / (t[0] - x)
+            p += 1
+        x = t[0]
+        y = t[1]
+    return lastvalue
 
 
 def get_duration_action(tuples, MAX_TIME=None):
@@ -35,14 +54,14 @@ def get_duration_action(tuples, MAX_TIME=None):
     resulted from simulate query.
     """
     result = []
-    if len(tuples) == 1: # Can only happen if always variable == 0.
+    if len(tuples) == 1:  # Can only happen if always variable == 0.
         result.append((MAX_TIME, 0))
-    elif len(tuples) == 2: # Can only happen of always variable != 0.
+    elif len(tuples) == 2:  # Can only happen of always variable != 0.
         action = tuples[1][1]
         result.append((MAX_TIME, action))
     else:
         for i in range(1, len(tuples)):
-            duration = tuples[i][0] - tuples[i-1][0] 
+            duration = tuples[i][0] - tuples[i - 1][0]
             action = tuples[i][1]
             if duration > 0:
                 result.append((duration, action))
@@ -81,15 +100,15 @@ def merge_verifyta_args(cfg_dict):
     """
     args = ""
     for k, v in cfg_dict.items():
-        args += " --" + k + " " + str(v)
+        if (v != None):
+            args += " --" + k + " " + str(v)
+        else:
+            args += " --" + k
     return args[1:]
 
 
-def run_stratego(
-    modelfile, 
-    queryfile="", 
-    learning_args={}, 
-    verifyta_path="verifyta"):
+def run_stratego(modelfile, queryfile="", learning_args={},
+                 verifyta_path="verifyta"):
     """
     Usage: verifyta.bin [OPTION]... MODEL QUERY
     modelfile .xml
@@ -105,8 +124,12 @@ def run_stratego(
     args_list = [v for v in args.values() if v != ""]
     task = " ".join(args_list)
 
-    process = subprocess.Popen(task, shell=True,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    #process = subprocess.Popen(task, shell=True,
+    #                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # This second version of the call ensures that the bash shell is started in interactive
+    # mode, thus using any aliases and path variable extensions defined in .bashrc.
+    process = subprocess.Popen(['/bin/bash', '-i', '-c', task],
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     result = process.communicate()
     result = [r.decode("utf-8") for r in result]
     return result
@@ -117,11 +140,12 @@ class StrategoController:
     Controller class to interface with UPPAAL Stratego
     through python.
     """
-    def __init__(self, modeltemplatefile, modelconfigfile, cleanup=True):
+
+    def __init__(self, modeltemplatefile, model_cfg_dict, cleanup=True):
         self.templatefile = modeltemplatefile
         self.simulationfile = modeltemplatefile.replace(".xml", "_sim.xml")
         self.cleanup = cleanup
-        self.states = get_initial_states(modelconfigfile)
+        self.states = model_cfg_dict
         self.tagRule = "//TAG_{}"
 
     def init_simfile(self):
@@ -135,7 +159,7 @@ class StrategoController:
         """
         Clean created temporary files after the simulation is finished.
         """
-        os.remove(self.simulationfile)       
+        os.remove(self.simulationfile)
 
     def debug_copy(self, debug_file):
         """
@@ -182,20 +206,102 @@ class StrategoController:
         """
         return self.states.get(key)
 
-    def run(self, 
-        queryfile="", 
-        learning_args={}, 
-        verifyta_path="verifyta"):
+    def get_states(self):
+        """
+        Get the state variable names.
+        """
+        return self.states
+
+    def run(self, queryfile="", learning_args={}, verifyta_path="verifyta"):
         """
         Runs verifyta with requested queries and parameters
         that are either part of the *.xml model file or explicitly
         specified.
         """
         output = run_stratego(self.simulationfile, queryfile,
-            learning_args, verifyta_path)
+                              learning_args, verifyta_path)
         if self.cleanup:
             self.remove_simfile()
         return output[0]
+
+
+class MPCsetup():
+    """
+    Class that performs the basic MPC scheme for Uppaal Stratego.
+    """
+    def __init__(self, modeltemplatefile, queryfile="", model_cfg_dict={},
+                 learning_args={}, verifytacommand="verifyta", debug=False):
+        self.modeltemplatefile = modeltemplatefile
+        self.queryfile = queryfile
+        self.model_cfg_dict = model_cfg_dict
+        self.learning_args = learning_args
+        self.verifytacommand = verifytacommand
+        self.debug = debug
+        self.controller = StrategoController(self.modeltemplatefile,
+                                             self.model_cfg_dict)
+
+    def run(self, controlperiod, horizon, duration):
+        """
+        Run the basic MPC scheme where the controller can changes its strategy
+        once every period, where the strategy synthesis looks the horizon ahead,
+        and continues for the duration of the experiment.
+
+        The control period is in Uppaal Stratego time units. Both horizon and
+        duration have control period as time unit.
+        """
+        # Print the variable names and their initial values.
+        print(self.controller.print_var_names())
+        print(self.controller.print_state())
+
+        for step in range(duration):
+            # At each MPC step we want a clean template copy
+            # to insert variables.
+            self.controller.init_simfile()
+
+            # Insert current state into simulation template.
+            self.controller.insert_state()
+
+            # To debug errors from verifyta one can save intermediate
+            # simulation file.
+            if self.debug:
+                self.controller.debug_copy(self.modeltemplatefile.replace(".xml",
+                                                                          "_debug.xml"))
+
+            # Create the new query file for the next step.
+            final = horizon * controlperiod + self.controller.get_state("t")
+            self.create_query_file(self.queryfile, horizon, controlperiod, final,
+                                   self.controller)
+
+            # Run a verifyta query to simulate optimal strategy.
+            result = self.controller.run(queryfile=self.queryfile,
+                                         learning_args=self.learning_args,
+                                         verifyta_path=self.verifytacommand)
+
+            # Extract the state from the result.
+            new_state = {}
+            for var, value in self.controller.get_states().items():
+                new_value = extract_state(result, var, controlperiod)
+                if isinstance(value, int):
+                    new_value = int(new_value)
+                new_state[var] = new_value
+            self.controller.update_state(new_state)
+
+            # Print output.
+            print(self.controller.print_state())
+
+    def create_query_file(self, queryfile, horizon, period, final, controller):
+        """
+        Create a basic query file for each step of the MPC scheme. Current
+        content will be overwritten.
+
+        You might want to override this method for specific models.
+        """
+        with open(queryfile, "w") as f:
+            line1 = "strategy opt = minE (c) [<={}*{}]: <> (t=={})\n"
+            f.write(line1.format(horizon, period, final))
+            f.write("\n")
+            line2 = "simulate 1 [<={}+1] {{ {} }} under opt\n"
+            f.write(line2.format(period, controller.print_var_names()))
 
 
 if __name__ == '__main__':
