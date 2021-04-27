@@ -3,11 +3,16 @@ from unittest import mock
 import os
 import strategoutil as sutil
 
+
 class TestUtil(unittest.TestCase):
-    POPEN_KWARGS = {"shell": True, "stdout":-1, "stderr":-1}
+    INTERACTIVE_BASH = True
+    if INTERACTIVE_BASH:
+        POPEN_KWARGS = {"stdout": -1, "stderr": -1}
+    else:
+        POPEN_KWARGS = {"shell": True, "stdout": -1, "stderr": -1}
 
     def test_get_int_tuples_given_single_variable_simulate(self):
-        verifyta_output =  """
+        verifyta_output = """
         -- Formula is satisfied.
         phase:
         [0]: (0,0) (4,0) (4,1) (17,1) (17,0) (25,0) (25,1) (36,1)
@@ -56,13 +61,26 @@ class TestUtil(unittest.TestCase):
     def test_run_stratego_model_only(self):
         with mock.patch("strategoutil.subprocess.Popen") as mock_Popen:
             sutil.run_stratego("model.xml", verifyta_path="$HOME/verifyta")
-            expected = "$HOME/verifyta model.xml"
+            if self.INTERACTIVE_BASH:
+                # Below is the expected result with interactive bash enabled.
+                text = "$HOME/verifyta model.xml"
+                expected = (["/bin/bash", "-i", "-c", text])
+            else:
+                # Below is the expected result with Popen default shell.
+                expected = "$HOME/verifyta model.xml"
+
             mock_Popen.assert_called_with(expected, **self.POPEN_KWARGS)
 
     def test_run_stratego_model_and_query(self):
         with mock.patch("strategoutil.subprocess.Popen") as mock_Popen:
             sutil.run_stratego("model.xml", "query.q")
-            expected = "verifyta model.xml query.q"
+            if self.INTERACTIVE_BASH:
+                # Below is the expected result with interactive bash enabled.
+                text = "verifyta model.xml query.q"
+                expected = ["/bin/bash", "-i", "-c", text]
+            else:
+                # Below is the expected result with Popen default shell.
+                expected = "verifyta model.xml query.q"
             mock_Popen.assert_called_with(expected, **self.POPEN_KWARGS)
 
     def test_run_stratego_all_variables(self):
@@ -77,14 +95,25 @@ class TestUtil(unittest.TestCase):
                 "filter": "0"
             }
             sutil.run_stratego("model.xml", "query.q", learning_args, "verifyta")
-            expected = ("verifyta model.xml query.q --learning-method 4 "
-            "--good-runs 100 --total-runs 100 --runs-pr-state 100 --eval-runs 100 " 
-            "--max-iterations 30 --filter 0")
+            if self.INTERACTIVE_BASH:
+                # Below is the expected result with interactive bash enabled.
+                text = ("verifyta model.xml query.q --learning-method 4 "
+                        "--good-runs 100 --total-runs 100 --runs-pr-state 100 "
+                        "--eval-runs 100 --max-iterations 30 --filter 0")
+                expected = ["/bin/bash", "-i", "-c", text]
+
+            else:
+                # Below is the expected result with Popen default shell.
+                expected = ("verifyta model.xml query.q --learning-method 4 "
+                            "--good-runs 100 --total-runs 100 --runs-pr-state 100 "
+                            "--eval-runs 100 --max-iterations 30 --filter 0")
             mock_Popen.assert_called_with(expected, **self.POPEN_KWARGS)
+
 
 class TestFileInteraction(unittest.TestCase):
     def setUp(self):
-        """build dummy modelfiles
+        """
+        Build dummy model files.
         """
         self.modelfile = "modelfile.xml"
         with open(self.modelfile, "w") as fin:
@@ -96,7 +125,8 @@ class TestFileInteraction(unittest.TestCase):
             """)
 
     def tearDown(self):
-        """remove modelfile
+        """
+        Remove model file.
         """
         os.remove(self.modelfile)
 
@@ -108,8 +138,3 @@ class TestFileInteraction(unittest.TestCase):
         with open(self.modelfile, "r") as fin:
             correct_substitution = "int important_variable_X = 42;" in fin.read()
             self.assertTrue(correct_substitution)
-
-
-
-
-
