@@ -132,6 +132,14 @@ def run_stratego(modelfile, queryfile="", learning_args=None, verifyta_path="ver
     return result
 
 
+def successful_result(text):
+    """
+    Verify whether the stratego output is based on the successful synthesis of a strategy.
+    """
+    result = re.search("Formula is satisfied", text)
+    return result is not None
+
+
 class StrategoController:
     """
     Controller class to interface with UPPAAL Stratego through python.
@@ -261,11 +269,10 @@ class MPCsetup:
 
             # Create the new query file for the next step.
             final = horizon * controlperiod + self.controller.get_state("t")
-            self.create_query_file(self.queryfile, horizon, controlperiod, final, self.controller)
+            self.create_query_file(horizon, controlperiod, final)
 
             # Run a verifyta query to simulate optimal strategy.
-            result = self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
-                                         verifyta_path=self.verifytacommand)
+            result = self.run_verifyta()
 
             # Extract the state from the result.
             new_state = {}
@@ -279,18 +286,54 @@ class MPCsetup:
             # Print output.
             print(self.controller.print_state())
 
-    def create_query_file(self, queryfile, horizon, period, final, controller):
+    def create_query_file(self, horizon, period, final):
         """
-        Create a basic query file for each step of the MPC scheme. Current content will be overwritten.
+        Create a basic query file for each step of the MPC scheme. Current content will be
+        overwritten.
 
         You might want to override this method for specific models.
         """
-        with open(queryfile, "w") as f:
+        with open(self.queryfile, "w") as f:
             line1 = "strategy opt = minE (c) [<={}*{}]: <> (t=={})\n"
             f.write(line1.format(horizon, period, final))
             f.write("\n")
             line2 = "simulate 1 [<={}+1] {{ {} }} under opt\n"
-            f.write(line2.format(period, controller.print_var_names()))
+            f.write(line2.format(period, self.controller.print_var_names()))
+
+    def run_verifyta(self):
+        """
+        Run verifyta with the current data stored in this class.
+        """
+        return self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
+                                   verifyta_path=self.verifytacommand)
+
+
+class SafeMPCSetup(MPCsetup):
+    def run_verifyta(self):
+        """
+        Run verifyta with the current data stored in this class. It verifies whether Stratego has
+        successfully synthesized a strategy. If not, it will create an alternative query file and
+        run Stratego again.
+
+        Overrides MPCsetup.run_verifyta()
+        """
+        result = self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
+                                     verifyta_path=self.verifytacommand)
+
+        if successful_result(result):
+            return result
+        else:
+            self.queryfile = self.create_alternative_query_file()
+            self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
+                                verifyta_path=self.verifytacommand)
+        return result
+
+    def create_alternative_query_file(self, horizon, period, final) -> str:
+        """
+        Create an alternative query file in case the original query could not be satisfied by
+        Stratego, i.e., it could not find a strategy.
+        """
+        pass
 
 
 if __name__ == '__main__':
