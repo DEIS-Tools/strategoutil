@@ -21,6 +21,41 @@ class TestUtil(unittest.TestCase):
         expected = [(0,0), (4,0), (4,1), (17,1), (17,0), (25,0), (25,1), (36,1)]
         self.assertListEqual(result, expected)
 
+    def test_get_float_tuples_given_single_variable_simulate(self):
+        verifyta_output = """
+        -- Formula is satisfied.
+        x:
+        [0]: (0,0.0) (4,0.0) (4,1.5) (17.456,1) (17.456,4.123456) (25.5,0.001) (25.5,1) (36,1)
+        """
+        result = sutil.get_float_tuples(verifyta_output)
+        expected = [(0,0.0), (4,0.0), (4,1.5), (17.456,1), (17.456,4.123456), (25.5,0.001),
+                    (25.5,1), (36,1)]
+        self.assertListEqual(result, expected)
+
+    def test_extract_state_given_single_variable_simulate(self):
+        verifyta_output = """
+-- Formula is satisfied.
+x:
+[0]: (0,0.0) (4,0.0) (4,1.5) (17.456,1) (17.456,4.123456) (25,0.000) (25,1) (36,1)
+"""
+        var = "x"
+        controlperiod = 25
+        result = sutil.extract_state(verifyta_output, var, controlperiod)
+        expected = 1.0
+        self.assertEqual(result, expected)
+
+    def test_extract_state_given_single_variable_interpolate(self):
+        verifyta_output = """
+-- Formula is satisfied.
+x:
+[0]: (0,0.0) (4,0.0) (4,1.5) (17.456,1) (17.456,4.123456) (25,0.000) (25,1) (36,12.11)
+"""
+        var = "x"
+        controlperiod = 35
+        result = sutil.extract_state(verifyta_output, var, controlperiod)
+        expected = 11.1
+        self.assertEqual(result, expected)
+
     def test_get_duration_action_given_empty_input(self):
         input_case = []
         result = sutil.get_duration_action(input_case)
@@ -109,6 +144,23 @@ class TestUtil(unittest.TestCase):
                             "--eval-runs 100 --max-iterations 30 --filter 0")
             mock_Popen.assert_called_with(expected, **self.POPEN_KWARGS)
 
+    def test_successful_result_true(self):
+        verifyta_output = """
+        -- Formula is satisfied.
+        x:
+        [0]: (0,0.0) (4,0.0) (4,1.5) (17.456,1) (17.456,4.123456) (25,0.000) (25,1) (36,12.11)
+        """
+        result = sutil.successful_result(verifyta_output)
+        self.assertTrue(result)
+
+    def test_successful_result_false(self):
+        verifyta_output = """
+        -- Formula is not satisfied.
+        x:
+        [0]: (0,0.0) (4,0.0) (4,1.5) (17.456,1) (17.456,4.123456) (25,0.000) (25,1) (36,12.11)
+        """
+        result = sutil.successful_result(verifyta_output)
+        self.assertFalse(result)
 
 class TestFileInteraction(unittest.TestCase):
     def setUp(self):
