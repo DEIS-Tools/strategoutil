@@ -2,13 +2,11 @@ import re
 import subprocess
 import shutil
 import os
-import yaml
 
 
 def get_int_tuples(text):
     """
-    Convert Stratego simulation output to list of tuples
-    (int, int).
+    Convert Stratego simulation output to list of tuples (int, int).
     """
     string_tuples = re.findall(r"\((\d+),(\d+)\)", text)
     int_tuples = [(int(t[0]), int(t[1])) for t in string_tuples]
@@ -17,11 +15,10 @@ def get_int_tuples(text):
 
 def get_float_tuples(text):
     """
-    Convert Stratego simulation output to list of tuples
-    (float, float).
+    Convert Stratego simulation output to list of tuples (float, float).
     """
     float_re = r"([-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
-    pattern = r"\(" + float_re + "," + float_re + "\)"
+    pattern = r"\(" + float_re + "," + float_re + r"\)"
     string_tuples = re.findall(pattern, text)
     float_tuples = [(float(t[0]), float(t[4])) for t in string_tuples]
     return float_tuples
@@ -29,11 +26,10 @@ def get_float_tuples(text):
 
 def extract_state(text, var, controlperiod):
     """
-    Extract the state from the Uppaal Stratego output at the end of the simulated
-    control period.
+    Extract the state from the Uppaal Stratego output at the end of the simulated control period.
     """
-    float_re = "[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?"
-    pattern = var + ":\n\[0\]:( \(" + float_re + "," + float_re + "\))*"
+    float_re = r"[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?"
+    pattern = var + r":\n\[0\]:( \(" + float_re + "," + float_re + r"\))*"
     result = re.search(pattern, text)
     float_tuples = get_float_tuples(result.group())
     x, y = 0.0, 0.0
@@ -48,17 +44,16 @@ def extract_state(text, var, controlperiod):
     return lastvalue
 
 
-def get_duration_action(tuples, MAX_TIME=None):
+def get_duration_action(tuples, max_time=None):
     """
-    Get tuples (duration, action) from tuples (time, variable)
-    resulted from simulate query.
+    Get tuples (duration, action) from tuples (time, variable) resulted from simulate query.
     """
     result = []
     if len(tuples) == 1:  # Can only happen if always variable == 0.
-        result.append((MAX_TIME, 0))
+        result.append((max_time, 0))
     elif len(tuples) == 2:  # Can only happen of always variable != 0.
         action = tuples[1][1]
-        result.append((MAX_TIME, action))
+        result.append((max_time, action))
     else:
         for i in range(1, len(tuples)):
             duration = tuples[i][0] - tuples[i - 1][0]
@@ -83,8 +78,7 @@ def insert_to_modelfile(model_file, tag, inserted):
 
 def array_to_stratego(arr):
     """
-    Convert python array string to C style array
-    used in UPPAAL Stratego.
+    Convert python array string to C style array used in UPPAAL Stratego.
     NB, does not include ';' in the end.
     """
     arrstr = str(arr)
@@ -95,26 +89,26 @@ def array_to_stratego(arr):
 
 def merge_verifyta_args(cfg_dict):
     """
-    Concatenate and format a string of verifyta
-    arguments given by the .yaml configuration file.
+    Concatenate and format a string of verifyta arguments given by the configuration dictionary.
     """
     args = ""
     for k, v in cfg_dict.items():
-        if (v != None):
+        if v is not None:
             args += " --" + k + " " + str(v)
         else:
             args += " --" + k
     return args[1:]
 
 
-def run_stratego(modelfile, queryfile="", learning_args={},
-                 verifyta_path="verifyta", interactive_bash=True):
+def run_stratego(modelfile, queryfile="", learning_args=None, verifyta_path="verifyta",
+                 interactive_bash=True):
     """
     Usage: verifyta.bin [OPTION]... MODEL QUERY
     modelfile .xml
     query .q
-    configfile .yaml with entries of the same format as verifyta arguments
+    learning_args with entries of the same format as verifyta arguments
     """
+    learning_args = {} if learning_args is None else learning_args
     args = {
         "verifyta": verifyta_path,
         "model": modelfile,
@@ -125,15 +119,13 @@ def run_stratego(modelfile, queryfile="", learning_args={},
     task = " ".join(args_list)
 
     if interactive_bash:
-        # This version of the call ensures that the bash shell is started in
-        # interactive mode, thus using any aliases and path variable extensions
-        # defined in the user's .bashrc file.
+        # This version of the call ensures that the bash shell is started in interactive mode,
+        # thus using any aliases and path variable extensions defined in the user's .bashrc file.
         process = subprocess.Popen(['/bin/bash', '-i', '-c', task],
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     else:
         # This version of the call runs Uppaal Stratego using the Popen default shell.
-        process = subprocess.Popen(task, shell=True, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+        process = subprocess.Popen(task, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     result = process.communicate()
     result = [r.decode("utf-8") for r in result]
@@ -142,11 +134,10 @@ def run_stratego(modelfile, queryfile="", learning_args={},
 
 class StrategoController:
     """
-    Controller class to interface with UPPAAL Stratego
-    through python.
+    Controller class to interface with UPPAAL Stratego through python.
     """
-    def __init__(self, modeltemplatefile, model_cfg_dict, cleanup=True,
-                 interactive_bash=True):
+
+    def __init__(self, modeltemplatefile, model_cfg_dict, cleanup=True, interactive_bash=True):
         self.templatefile = modeltemplatefile
         self.simulationfile = modeltemplatefile.replace(".xml", "_sim.xml")
         self.cleanup = cleanup
@@ -156,8 +147,7 @@ class StrategoController:
 
     def init_simfile(self):
         """
-        Make a copy of a template file where data of
-        specific variables is inserted.
+        Make a copy of a template file where data of specific variables is inserted.
         """
         shutil.copyfile(self.templatefile, self.simulationfile)
 
@@ -169,8 +159,7 @@ class StrategoController:
 
     def debug_copy(self, debug_file):
         """
-        Copy UPPAAL simulationfile.xml file for manual
-        debug in Stratego.
+        Copy UPPAAL simulationfile.xml file for manual debug in Stratego.
         """
         shutil.copyfile(self.simulationfile, debug_file)
 
@@ -183,9 +172,8 @@ class StrategoController:
 
     def insert_state(self):
         """
-        Insert the current state values of the variables at the
-        appropriate position in the simulation *.xml file indicated
-        by the tag rule.
+        Insert the current state values of the variables at the appropriate position in the
+        simulation *.xml file indicated by the tag rule.
         """
         for name, value in self.states.items():
             tag = self.tagRule.format(name)
@@ -218,12 +206,12 @@ class StrategoController:
         """
         return self.states
 
-    def run(self, queryfile="", learning_args={}, verifyta_path="verifyta"):
+    def run(self, queryfile="", learning_args=None, verifyta_path="verifyta"):
         """
-        Runs verifyta with requested queries and parameters
-        that are either part of the *.xml model file or explicitly
-        specified.
+        Runs verifyta with requested queries and parameters that are either part of the *.xml model
+        file or explicitly specified.
         """
+        learning_args = {} if learning_args is None else learning_args
         output = run_stratego(self.simulationfile, queryfile,
                               learning_args, verifyta_path, self.interactive_bash)
         if self.cleanup:
@@ -231,58 +219,52 @@ class StrategoController:
         return output[0]
 
 
-class MPCsetup():
+class MPCsetup:
     """
     Class that performs the basic MPC scheme for Uppaal Stratego.
     """
-    def __init__(self, modeltemplatefile, queryfile="", model_cfg_dict={},
-                 learning_args={}, verifytacommand="verifyta", debug=False,
-                 interactive_bash=True):
+
+    def __init__(self, modeltemplatefile, queryfile="", model_cfg_dict=None, learning_args=None,
+                 verifytacommand="verifyta", debug=False, interactive_bash=True):
         self.modeltemplatefile = modeltemplatefile
         self.queryfile = queryfile
-        self.model_cfg_dict = model_cfg_dict
-        self.learning_args = learning_args
+        self.model_cfg_dict = {} if model_cfg_dict is None else model_cfg_dict
+        self.learning_args = {} if learning_args is None else learning_args
         self.verifytacommand = verifytacommand
         self.debug = debug
-        self.controller = StrategoController(self.modeltemplatefile,
-                                             self.model_cfg_dict,
+        self.controller = StrategoController(self.modeltemplatefile, self.model_cfg_dict,
                                              interactive_bash=interactive_bash)
 
     def run(self, controlperiod, horizon, duration):
         """
-        Run the basic MPC scheme where the controller can changes its strategy
-        once every period, where the strategy synthesis looks the horizon ahead,
-        and continues for the duration of the experiment.
+        Run the basic MPC scheme where the controller can changes its strategy once every period,
+        where the strategy synthesis looks the horizon ahead, and continues for the duration of the
+        experiment.
 
-        The control period is in Uppaal Stratego time units. Both horizon and
-        duration have control period as time unit.
+        The control period is in Uppaal Stratego time units. Both horizon and duration have control
+        period as time unit.
         """
         # Print the variable names and their initial values.
         print(self.controller.print_var_names())
         print(self.controller.print_state())
 
         for step in range(duration):
-            # At each MPC step we want a clean template copy
-            # to insert variables.
+            # At each MPC step we want a clean template copy to insert variables.
             self.controller.init_simfile()
 
             # Insert current state into simulation template.
             self.controller.insert_state()
 
-            # To debug errors from verifyta one can save intermediate
-            # simulation file.
+            # To debug errors from verifyta one can save intermediate simulation file.
             if self.debug:
-                self.controller.debug_copy(self.modeltemplatefile.replace(".xml",
-                                                                          "_debug.xml"))
+                self.controller.debug_copy(self.modeltemplatefile.replace(".xml", "_debug.xml"))
 
             # Create the new query file for the next step.
             final = horizon * controlperiod + self.controller.get_state("t")
-            self.create_query_file(self.queryfile, horizon, controlperiod, final,
-                                   self.controller)
+            self.create_query_file(self.queryfile, horizon, controlperiod, final, self.controller)
 
             # Run a verifyta query to simulate optimal strategy.
-            result = self.controller.run(queryfile=self.queryfile,
-                                         learning_args=self.learning_args,
+            result = self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
                                          verifyta_path=self.verifytacommand)
 
             # Extract the state from the result.
@@ -299,8 +281,7 @@ class MPCsetup():
 
     def create_query_file(self, queryfile, horizon, period, final, controller):
         """
-        Create a basic query file for each step of the MPC scheme. Current
-        content will be overwritten.
+        Create a basic query file for each step of the MPC scheme. Current content will be overwritten.
 
         You might want to override this method for specific models.
         """
