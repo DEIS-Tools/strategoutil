@@ -222,8 +222,6 @@ class StrategoController:
         learning_args = {} if learning_args is None else learning_args
         output = run_stratego(self.simulationfile, queryfile,
                               learning_args, verifyta_path, self.interactive_bash)
-        if self.cleanup:
-            self.remove_simfile()
         return output[0]
 
 
@@ -272,7 +270,7 @@ class MPCsetup:
             self.create_query_file(horizon, controlperiod, final)
 
             # Run a verifyta query to simulate optimal strategy.
-            result = self.run_verifyta()
+            result = self.run_verifyta(horizon, controlperiod, final)
 
             # Extract the state from the result.
             new_state = {}
@@ -300,16 +298,20 @@ class MPCsetup:
             line2 = "simulate 1 [<={}+1] {{ {} }} under opt\n"
             f.write(line2.format(period, self.controller.print_var_names()))
 
-    def run_verifyta(self):
+    def run_verifyta(self, *args, **kwargs):
         """
         Run verifyta with the current data stored in this class.
         """
-        return self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
+        result = self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
                                    verifyta_path=self.verifytacommand)
+
+        if self.controller.cleanup:
+            self.controller.remove_simfile()
+        return result
 
 
 class SafeMPCSetup(MPCsetup):
-    def run_verifyta(self):
+    def run_verifyta(self, horizon, controlperiod, final, *args, **kwargs):
         """
         Run verifyta with the current data stored in this class. It verifies whether Stratego has
         successfully synthesized a strategy. If not, it will create an alternative query file and
@@ -320,12 +322,13 @@ class SafeMPCSetup(MPCsetup):
         result = self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
                                      verifyta_path=self.verifytacommand)
 
-        if successful_result(result):
-            return result
-        else:
-            self.queryfile = self.create_alternative_query_file()
-            self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
+        if not successful_result(result):
+            self.create_alternative_query_file(horizon, controlperiod, final)
+            result = self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
                                 verifyta_path=self.verifytacommand)
+
+        if self.controller.cleanup:
+            self.controller.remove_simfile()
         return result
 
     def create_alternative_query_file(self, horizon, period, final) -> str:
