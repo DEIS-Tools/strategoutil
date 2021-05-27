@@ -241,7 +241,7 @@ class MPCsetup:
         self.controller = StrategoController(self.modeltemplatefile, self.model_cfg_dict,
                                              interactive_bash=interactive_bash)
 
-    def run(self, controlperiod, horizon, duration):
+    def run(self, controlperiod, horizon, duration, **kwargs):
         """
         Run the basic MPC scheme where the controller can changes its strategy once every period,
         where the strategy synthesis looks the horizon ahead, and continues for the duration of the
@@ -255,6 +255,9 @@ class MPCsetup:
         print(self.controller.print_state())
 
         for step in range(duration):
+            # Perform some customizable preprocessing at each step.
+            self.perform_at_start_iteration(controlperiod, horizon, duration, step, **kwargs)
+
             # At each MPC step we want a clean template copy to insert variables.
             self.controller.init_simfile()
 
@@ -273,16 +276,17 @@ class MPCsetup:
             result = self.run_verifyta(horizon, controlperiod, final)
 
             # Extract the state from the result.
-            new_state = {}
-            for var, value in self.controller.get_states().items():
-                new_value = extract_state(result, var, controlperiod)
-                if isinstance(value, int):
-                    new_value = int(new_value)
-                new_state[var] = new_value
-            self.controller.update_state(new_state)
+            self.extract_states_from_Stratego(result, controlperiod)
 
             # Print output.
             print(self.controller.print_state())
+
+    def perform_at_start_iteration(self, *args, **kwargs):
+        """
+        Performs some customizable preprocessing steps at the start of each MPC iteration. This
+        method can be overritten for specific models.
+        """
+        pass
 
     def create_query_file(self, horizon, period, final):
         """
@@ -309,6 +313,17 @@ class MPCsetup:
             self.controller.remove_simfile()
         return result
 
+    def extract_states_from_Stratego(self, result, controlperiod):
+        """
+        Extract the new state values from the simulation output of Stratego.
+        """
+        new_state = {}
+        for var, value in self.controller.get_states().items():
+            new_value = extract_state(result, var, controlperiod)
+            if isinstance(value, int):
+                new_value = int(new_value)
+            new_state[var] = new_value
+        self.controller.update_state(new_state)
 
 class SafeMPCSetup(MPCsetup):
     def run_verifyta(self, horizon, controlperiod, final, *args, **kwargs):
