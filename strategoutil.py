@@ -2,6 +2,7 @@ import re
 import subprocess
 import shutil
 import os
+import sys
 
 
 def get_int_tuples(text):
@@ -140,6 +141,17 @@ def successful_result(text):
     return result is not None
 
 
+def print_progress_bar(i, max, postText):
+    """
+    Print a progress bar to sys.stdout. From https://stackoverflow.com/a/58602365.
+    """
+    n_bar = 20  # size of progress bar
+    j = i / max
+    sys.stdout.write('\r')
+    sys.stdout.write(f"[{'=' * int(n_bar * j):{n_bar}s}] {int(100 * j)}%  {postText}")
+    sys.stdout.flush()
+
+
 class StrategoController:
     """
     Controller class to interface with UPPAAL Stratego through python.
@@ -230,9 +242,10 @@ class MPCsetup:
     Class that performs the basic MPC scheme for Uppaal Stratego.
     """
 
-    def __init__(self, modeltemplatefile, queryfile="", model_cfg_dict=None, learning_args=None,
+    def __init__(self, modeltemplatefile, output_file_path, queryfile="", model_cfg_dict=None, learning_args=None,
                  verifytacommand="verifyta", debug=False, interactive_bash=True):
         self.modeltemplatefile = modeltemplatefile
+        self.output_file_path = output_file_path
         self.queryfile = queryfile
         self.model_cfg_dict = {} if model_cfg_dict is None else model_cfg_dict
         self.learning_args = {} if learning_args is None else learning_args
@@ -251,10 +264,13 @@ class MPCsetup:
         period as time unit.
         """
         # Print the variable names and their initial values.
-        print(self.controller.print_var_names())
-        print(self.controller.print_state())
+        self.print_state_vars()
+        self.print_state()
+        print("")
 
         for step in range(duration):
+            print_progress_bar(step, duration, "progress")
+
             # Perform some customizable preprocessing at each step.
             self.perform_at_start_iteration(controlperiod, horizon, duration, step, **kwargs)
 
@@ -279,7 +295,8 @@ class MPCsetup:
             self.extract_states_from_Stratego(result, controlperiod)
 
             # Print output.
-            print(self.controller.print_state())
+            self.print_state()
+        print_progress_bar(duration, duration, "finished")
 
     def perform_at_start_iteration(self, *args, **kwargs):
         """
@@ -324,6 +341,23 @@ class MPCsetup:
                 new_value = int(new_value)
             new_state[var] = new_value
         self.controller.update_state(new_state)
+
+    def print_state_vars(self):
+        """
+        Print the names of the state variables to output file.
+        """
+        with open(self.output_file_path, "w") as f:
+            f.write(self.controller.print_var_names())
+            f.write("\n")
+
+    def print_state(self):
+        """
+        Print the current state to output file.
+        """
+        with open(self.output_file_path, "a") as f:
+            f.write(self.controller.print_state())
+            f.write("\n")
+
 
 class SafeMPCSetup(MPCsetup):
     def run_verifyta(self, horizon, controlperiod, final, *args, **kwargs):
