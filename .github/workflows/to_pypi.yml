@@ -3,13 +3,12 @@ on:
   workflow_run: 
     workflows: ["build-and-test-crossplatform"]
     branches: [pypi]
-    types: 
-      - completed
+    types: [completed]
 
 jobs:
   upload-to-pypi:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
