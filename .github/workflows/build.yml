@@ -1,13 +1,15 @@
 name: build-and-test-crossplatform
 on: 
-  pull-request:
+  pull_request:
     paths-ignore:
-      - '**.md'
+      - "doc/**"
+      - README.md
   push:
     tags-ignore:
       - '**'
     paths-ignore:
-      - '**.md'
+      - "doc/**"
+      - README.md
 
 jobs:
   build:
