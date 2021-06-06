@@ -1,5 +1,10 @@
 name: build-and-test-crossplatform
-on: [push, pull_request]
+on: 
+  push:
+    branches: [master, pypi]
+  pull_request:
+    branches: [master, pypi]
+
 jobs:
   build:
     strategy:
