@@ -1,0 +1,30 @@
+name: Upload to PyPI
+on:
+  release:
+    types: created
+
+jobs:
+  upload-to-pypi:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install pypa/build
+        run: >-
+          python -m pip install build --user
+
+      - name: Build a binary wheel and a source tarball
+        run: >-
+          python -m build --sdist --wheel --outdir dist/
+
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verbose: true
+          skip_existing: true
