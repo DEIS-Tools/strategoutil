@@ -1,4 +1,4 @@
-name: Upload to PIP
+name: Upload to PyPI
 on:
   push: 
     branches: [pypi]
