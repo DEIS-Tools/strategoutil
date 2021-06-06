@@ -3,7 +3,6 @@ on:
   push:
     tags-ignore:
       - 'v1.*'
-  pull_request:
 
 jobs:
   build:
