@@ -1,6 +1,8 @@
 name: build-and-test-crossplatform
 on:
   push:
+    branches:
+      - '**'
     tags-ignore:
       - 'v1.*'
 
