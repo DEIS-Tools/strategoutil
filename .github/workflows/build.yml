@@ -2,8 +2,12 @@ name: build-and-test-crossplatform
 on: 
   push:
     branches: [master, pypi]
+    tags-ignore:
+      - '*.*.*'
   pull_request:
     branches: [master]
+    tags-ignore:
+      - '*.*.*'
 
 jobs:
   build:
