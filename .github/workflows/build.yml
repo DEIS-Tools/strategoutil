@@ -1,9 +1,5 @@
 name: build-and-test-crossplatform
-on: 
-  pull_request:
-  push:
-    tags-ignore:
-      - '**'
+on: [push, pull_request]
 
 jobs:
   build:
