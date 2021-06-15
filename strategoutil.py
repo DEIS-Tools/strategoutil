@@ -199,14 +199,14 @@ class StrategoController:
             tag = self.tagRule.format(name)
             insert_to_modelfile(self.simulationfile, tag, str(value))
 
-    def print_var_names(self):
+    def get_var_names_as_string(self):
         """
         Print the names of the state variables separated by a ','.
         """
         separator = ","
         return separator.join(self.states.keys())
 
-    def print_state(self):
+    def get_state_as_string(self):
         """
         Print the values of the state variables separated by a ','.
         """
@@ -242,7 +242,7 @@ class MPCsetup:
     Class that performs the basic MPC scheme for Uppaal Stratego.
     """
 
-    def __init__(self, modeltemplatefile, output_file_path, queryfile="", model_cfg_dict=None, learning_args=None,
+    def __init__(self, modeltemplatefile, output_file_path=None, queryfile="", model_cfg_dict=None, learning_args=None,
                  verifytacommand="verifyta", debug=False, interactive_bash=True):
         self.modeltemplatefile = modeltemplatefile
         self.output_file_path = output_file_path
@@ -266,10 +266,10 @@ class MPCsetup:
         # Print the variable names and their initial values.
         self.print_state_vars()
         self.print_state()
-        print("")
 
         for step in range(duration):
-            print_progress_bar(step, duration, "progress")
+            # Only print progress to stdout if results are printed to a file.
+            if (self.output_file_path): print_progress_bar(step, duration, "progress")
 
             # Perform some customizable preprocessing at each step.
             self.perform_at_start_iteration(controlperiod, horizon, duration, step, **kwargs)
@@ -296,7 +296,7 @@ class MPCsetup:
 
             # Print output.
             self.print_state()
-        print_progress_bar(duration, duration, "finished")
+        if(self.output_file_path): print_progress_bar(duration, duration, "finished")
 
     def perform_at_start_iteration(self, *args, **kwargs):
         """
@@ -317,7 +317,7 @@ class MPCsetup:
             f.write(line1.format(horizon, period, final))
             f.write("\n")
             line2 = "simulate 1 [<={}+1] {{ {} }} under opt\n"
-            f.write(line2.format(period, self.controller.print_var_names()))
+            f.write(line2.format(period, self.controller.get_var_names_as_string()))
 
     def run_verifyta(self, *args, **kwargs):
         """
@@ -344,19 +344,27 @@ class MPCsetup:
 
     def print_state_vars(self):
         """
-        Print the names of the state variables to output file.
+        Print the names of the state variables to output file if provided. Otherwise, it will be p
+        rinted to the standard output.
         """
-        with open(self.output_file_path, "w") as f:
-            f.write(self.controller.print_var_names())
-            f.write("\n")
+        content = self.controller.get_var_names_as_string() + "\n"
+        if(self.output_file_path is None):
+            sys.stdout.write(content)
+        else:
+            with open(self.output_file_path, "w") as f:
+                f.write(content)
 
     def print_state(self):
         """
-        Print the current state to output file.
+        Print the current state to output file if provided. Otherwise, it will be printed to the
+        standard output.
         """
-        with open(self.output_file_path, "a") as f:
-            f.write(self.controller.print_state())
-            f.write("\n")
+        content = self.controller.get_state_as_string() + "\n"
+        if(self.output_file_path is None):
+            sys.stdout.write(content)
+        else:
+            with open(self.output_file_path, "a") as f:
+                f.write(content)
 
 
 class SafeMPCSetup(MPCsetup):
@@ -374,7 +382,7 @@ class SafeMPCSetup(MPCsetup):
         if not successful_result(result):
             self.create_alternative_query_file(horizon, controlperiod, final)
             result = self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
-                                verifyta_path=self.verifytacommand)
+                                         verifyta_path=self.verifytacommand)
 
         if self.controller.cleanup:
             self.controller.remove_simfile()
