@@ -193,7 +193,7 @@ class StrategoController:
     def insert_state(self):
         """
         Insert the current state values of the variables at the appropriate position in the
-        simulation *.xml file indicated by the tag rule.
+        simulation \*.xml file indicated by the tag rule.
         """
         for name, value in self.states.items():
             tag = self.tagRule.format(name)
@@ -228,7 +228,7 @@ class StrategoController:
 
     def run(self, queryfile="", learning_args=None, verifyta_path="verifyta"):
         """
-        Runs verifyta with requested queries and parameters that are either part of the *.xml model
+        Runs verifyta with requested queries and parameters that are either part of the \*.xml model
         file or explicitly specified.
         """
         learning_args = {} if learning_args is None else learning_args
