@@ -95,7 +95,7 @@ x:
 
     def test_run_stratego_model_only(self):
         with mock.patch("strategoutil.subprocess.Popen") as mock_Popen:
-            sutil.run_stratego("model.xml", verifyta_path="$HOME/verifyta")
+            sutil.run_stratego("model.xml", verifyta_command="$HOME/verifyta")
             if self.INTERACTIVE_BASH:
                 # Below is the expected result with interactive bash enabled.
                 text = "$HOME/verifyta model.xml"
