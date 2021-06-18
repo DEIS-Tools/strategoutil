@@ -4,6 +4,7 @@ Collection of utility functions and classes to interface [UPPAAL Stratego](https
 ## Repo status
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![badge](https://github.com/mihsamusev/strategoutil/workflows/build/badge.svg)](https://github.com/mihsamusev/strategoutil/actions)
+[![Documentation Status](https://readthedocs.org/projects/strategoutil/badge/?version=latest)](https://strategoutil.readthedocs.io/en/latest/?badge=latest)
 
 See which OS and Python versions combinations are supported [here](https://github.com/mihsamusev/strategoutil/actions).
 
@@ -19,6 +20,8 @@ pip install -e .
 ```
 
 2) Look how `strategoutil` is used with [example projects](https://github.com/mihsamusev/stratego_mpc_example)
+
+3) Look at the [documentation](https://strategoutil.readthedocs.io/en/latest/)
 ## Functionality
 - Write input variables to Stratego model `*.xml` files
 - Parse outputs of `simulate` queries to get timeseries of important variables
