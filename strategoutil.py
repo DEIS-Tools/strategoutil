@@ -240,10 +240,37 @@ class StrategoController:
 class MPCsetup:
     """
     Class that performs the basic MPC scheme for Uppaal Stratego.
+
+    The class parameters are also available as attributes.
+
+    :param modeltemplatefile: The file name of the template model.
+    :type modeltemplatefile: str
+    :param output_file_path: The file name of the output file where the results are printed to.
+    :type output_file_path: str
+    :param queryfile: The file name of the query file where the queries are written to.
+    :type queryfile: str
+    :param model_cfg_dict: Dictionary containing pairs of state variable name and its initial
+        value. The state variable name should match the tag name in the template model.
+    :type model_cfg_dict: dict
+    :param learning_args: Dictionary containing the learning parameters and their values. The
+        learning parameter names should be those used in the command line interface of Uppaal
+        Stratego. You can also include non-learning command line parameters in this dictionary. If
+        a non-learning command line parameter does not take any value, include the empty string ``""``
+        as value.
+    :type learning_arg: dict
+    :param verifytacommand: The command name for running Uppaal Stratego at the user's machine.
+    :type verifytacommand: str
+    :param debug: Whether or not to run in debug mode.
+    :type debug: bool
+    :param interactive_bash: Wether or not to run Uppaal Stratego with interactive bash. Interactive
+        bash uses `.bashrc`, such that the user's aliases are available.
+    :type interactive_bash: bool
+    :ivar controller: The controller object used for interacting with Uppaal Stratego.
+    :vartype controller: :class:`~StrategoController`
     """
 
-    def __init__(self, modeltemplatefile, output_file_path=None, queryfile="", model_cfg_dict=None, learning_args=None,
-                 verifytacommand="verifyta", debug=False, interactive_bash=True):
+    def __init__(self, modeltemplatefile, output_file_path=None, queryfile="", model_cfg_dict=None,
+                 learning_args=None, verifytacommand="verifyta", debug=False, interactive_bash=True):
         self.modeltemplatefile = modeltemplatefile
         self.output_file_path = output_file_path
         self.queryfile = queryfile
@@ -262,6 +289,18 @@ class MPCsetup:
 
         The control period is in Uppaal Stratego time units. Both horizon and duration have control
         period as time unit.
+
+        :param controlperiod: The interval duration after which the controller can change the control setting,
+            given in Uppaal Stratego time units.
+        :type controlperiod: int
+        :param horizon: The inval duration for which Uppaal stratego synthesizes a control strategy
+            each MPC step. Is given in the number of control periods.
+        :type horizon: int
+        :param duration: The number of times (steps) the MPC scheme should be performed, given as the
+            number of control periods.
+        :type duration: int
+        :param `**kwargs`: Any additional parameters are forwarded to
+            :meth:`~MPCsetup.perform_at_start_iteration`.
         """
         # Print the variable names and their initial values.
         self.print_state_vars()
@@ -311,6 +350,16 @@ class MPCsetup:
         overwritten.
 
         You might want to override this method for specific models.
+
+        :param horizon: The inval duration for which Uppaal stratego synthesizes a control strategy
+            each MPC step. Is given in the number of periods.
+        :type horizon: int
+        :param period: The interval duration after which the controller can change the control setting,
+            given in Uppaal Stratego time units.
+        :type period: int
+        :param final: The time that should be reached by the synthesized strategy, given in Uppaal
+            Stratego time units. Most likely this will be current time + *horizon* x *period*.
+        :type final: int
         """
         with open(self.queryfile, "w") as f:
             line1 = "strategy opt = minE (c) [<={}*{}]: <> (t=={})\n"
@@ -322,6 +371,11 @@ class MPCsetup:
     def run_verifyta(self, *args, **kwargs):
         """
         Run verifyta with the current data stored in this class.
+
+        :param `*args`: Is not used in this method; it is used in the overriding method
+            :meth:`~SafeMPCSetup.run_verifyta` in :class:`~SafeMPCSetup`.
+        :param `**kwargs`: Is not used in this method; it is used in the overriding method
+            :meth:`~SafeMPCSetup.run_verifyta` in :class:`~SafeMPCSetup`.
         """
         result = self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
                                    verifyta_path=self.verifytacommand)
@@ -333,6 +387,14 @@ class MPCsetup:
     def extract_states_from_Stratego(self, result, controlperiod):
         """
         Extract the new state values from the simulation output of Stratego.
+
+        The extracted values are directly saved in the :attr:`~MPCsetup.controller`.
+
+        :param result: The output as generated by Uppaal Stratego.
+        :type result: str
+        :param controlperiod: The interval duration after which the controller can change the control setting,
+            given in Uppaal Stratego time units.
+        :type controlperiod: int
         """
         new_state = {}
         for var, value in self.controller.get_states().items():
@@ -344,8 +406,8 @@ class MPCsetup:
 
     def print_state_vars(self):
         """
-        Print the names of the state variables to output file if provided. Otherwise, it will be p
-        rinted to the standard output.
+        Print the names of the state variables to output file if provided. Otherwise, it will be
+        printed to the standard output.
         """
         content = self.controller.get_var_names_as_string() + "\n"
         if(self.output_file_path is None):
