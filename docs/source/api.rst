@@ -27,3 +27,12 @@ SafeMPCSetup
     :members:
     :private-members:
     :show-inheritance:
+
+Static methods
+--------------
+
+The folowing static methods are available.
+
+.. automodule:: strategoutil
+    :members:
+    :exclude-members: StrategoController, MPCsetup, SafeMPCSetup

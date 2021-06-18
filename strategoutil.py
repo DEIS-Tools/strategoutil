@@ -8,6 +8,11 @@ import sys
 def get_int_tuples(text):
     """
     Convert Stratego simulation output to list of tuples (int, int).
+
+    :param text: The input string containing the Uppaal Stratego output.
+    :type text: str
+    :return: A list of tuples (int, int).
+    :rtype: list
     """
     string_tuples = re.findall(r"\((\d+),(\d+)\)", text)
     int_tuples = [(int(t[0]), int(t[1])) for t in string_tuples]
@@ -17,6 +22,11 @@ def get_int_tuples(text):
 def get_float_tuples(text):
     """
     Convert Stratego simulation output to list of tuples (float, float).
+
+    :param text: The input string containing the Uppaal Stratego output.
+    :type text: str
+    :return: A list of tuples (float, float).
+    :rtype: list
     """
     float_re = r"([-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
     pattern = r"\(" + float_re + "," + float_re + r"\)"
@@ -28,6 +38,16 @@ def get_float_tuples(text):
 def extract_state(text, var, controlperiod):
     """
     Extract the state from the Uppaal Stratego output at the end of the simulated control period.
+
+    :param text: The input string containing the Uppaal Stratego output.
+    :type text: str
+    :param var: The variable name.
+    :type var: str
+    :param controlperiod: The interval duration after which the controller can change the control setting,
+        given in Uppaal Stratego time units.
+    :type controlperiod: int
+    :return: The value of the variable at the end of *controlperiod*.
+    :rtype: float
     """
     float_re = r"[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?"
     pattern = var + r":\n\[0\]:( \(" + float_re + "," + float_re + r"\))*"
@@ -49,6 +69,7 @@ def get_duration_action(tuples, max_time=None):
     """
     Get tuples (duration, action) from tuples (time, variable) resulted from simulate query.
     """
+    # TODO: This method is currently not used in any of the classes. Can we safely remove this?
     result = []
     if len(tuples) == 1:  # Can only happen if always variable == 0.
         result.append((max_time, 0))
@@ -68,6 +89,13 @@ def get_duration_action(tuples, max_time=None):
 def insert_to_modelfile(model_file, tag, inserted):
     """
     Replace tag in model file by the desired text.
+
+    :param model_file: The file name of the model.
+    :type model_file: str
+    :param tag: The tag to replace.
+    :type tag: str
+    :param inserted: The value to replace the tag with.
+    :type inserted: str
     """
     with open(model_file, "r+") as f:
         modeltext = f.read()
@@ -81,6 +109,11 @@ def array_to_stratego(arr):
     """
     Convert python array string to C style array used in UPPAAL Stratego.
     NB, does not include ';' in the end.
+
+    :param arr: The array string to convert.
+    :type arr: str
+    :return: An array string where ``"["`` and ``"]"`` are replaced by ``"{"`` and ``"}"``, respectively.
+    :rtype: str
     """
     arrstr = str(arr)
     arrstr = str.replace(arrstr, "[", "{", 1)
@@ -91,6 +124,11 @@ def array_to_stratego(arr):
 def merge_verifyta_args(cfg_dict):
     """
     Concatenate and format a string of verifyta arguments given by the configuration dictionary.
+
+    :param cfg_dict: The configuration dictionary.
+    :type cfg_dict: dict
+    :return: String containing all arguments from the configuration dictionary.
+    :rtype: str
     """
     args = ""
     for k, v in cfg_dict.items():
@@ -101,17 +139,32 @@ def merge_verifyta_args(cfg_dict):
     return args[1:]
 
 
-def run_stratego(modelfile, queryfile="", learning_args=None, verifyta_path="verifyta",
+def run_stratego(modelfile, queryfile="", learning_args=None, verifyta_command="verifyta",
                  interactive_bash=True):
     """
-    Usage: verifyta.bin [OPTION]... MODEL QUERY
-    modelfile .xml
-    query .q
-    learning_args with entries of the same format as verifyta arguments
+    Run command line version of Uppaal Stratego.
+
+    :param modelfile: The file name of the model.
+    :type model_file: str
+    :param queryfile: The file name of the query.
+    :type queryfile: str
+    :param learning_args: Dictionary containing the learning parameters and their values. The
+        learning parameter names should be those used in the command line interface of Uppaal
+        Stratego. You can also include non-learning command line parameters in this dictionary.
+        If a non-learning command line parameter does not take any value, include the empty
+        string ``""`` as value.
+    :type learning_arg: dict
+    :param verifyta_command: The command name for running Uppaal Stratego at the user's machine.
+    :type verifyta_command: str
+    :param interactive_bash: Wether or not to run Uppaal Stratego with interactive bash. Interactive
+        bash uses `.bashrc`, such that the user's aliases are available.
+    :type interactive_bash: bool
+    :return: The output as produced by Uppaal Stratego.
+    :rtype: str
     """
     learning_args = {} if learning_args is None else learning_args
     args = {
-        "verifyta": verifyta_path,
+        "verifyta": verifyta_command,
         "model": modelfile,
         "query": queryfile,
         "config": merge_verifyta_args(learning_args)
@@ -136,6 +189,11 @@ def run_stratego(modelfile, queryfile="", learning_args=None, verifyta_path="ver
 def successful_result(text):
     """
     Verify whether the stratego output is based on the successful synthesis of a strategy.
+
+    :param text: The output generated by Uppaal Stratego.
+    :type text: str
+    :return: Whether Uppaal Stratego has successfuly ran all queries.
+    :rtype: bool
     """
     result = re.search("Formula is satisfied", text)
     return result is not None
@@ -143,9 +201,21 @@ def successful_result(text):
 
 def print_progress_bar(i, max, postText):
     """
-    Print a progress bar to sys.stdout. From https://stackoverflow.com/a/58602365.
+    Print a progress bar to sys.stdout.
+
+    Subsequent calls will override the previous progress bar (given that nothing else has been
+    written to sys.stdout).
+
+    From `<https://stackoverflow.com/a/58602365>`_.
+
+    :param i: The number of steps already completed.
+    :type i: int
+    :param max: The maximum number of steps for process to be completed.
+    :type max: int
+    :param postText: The text to display after the progress bar.
+    :type postText: str
     """
-    n_bar = 20  # size of progress bar
+    n_bar = 20  # Size of progress bar.
     j = i / max
     sys.stdout.write('\r')
     sys.stdout.write(f"[{'=' * int(n_bar * j):{n_bar}s}] {int(100 * j)}%  {postText}")
