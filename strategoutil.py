@@ -378,7 +378,7 @@ class MPCsetup:
             :meth:`~SafeMPCSetup.run_verifyta` in :class:`~SafeMPCSetup`.
         """
         result = self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
-                                   verifyta_path=self.verifytacommand)
+                                     verifyta_path=self.verifytacommand)
 
         if self.controller.cleanup:
             self.controller.remove_simfile()
@@ -430,13 +430,36 @@ class MPCsetup:
 
 
 class SafeMPCSetup(MPCsetup):
+    """
+    Class that performs the basic MPC scheme for Uppaal Stratego.
+
+    The class monitors and detects whether Uppaal Stratego has sucessfully synthesized a strategy.
+    If not, it will run Uppaal Stratego with an alternative query, which has to be specified by
+    the user, as it depends on the model what a safe query would be.
+    """
+
     def run_verifyta(self, horizon, controlperiod, final, *args, **kwargs):
         """
-        Run verifyta with the current data stored in this class. It verifies whether Stratego has
-        successfully synthesized a strategy. If not, it will create an alternative query file and
-        run Stratego again.
+        Run verifyta with the current data stored in this class.
 
-        Overrides MPCsetup.run_verifyta()
+        It verifies whether Stratego has successfully synthesized a strategy. If not, it will create
+        an alternative query file and run Stratego again.
+
+        Overrides :meth:`~MPCsetup.run_verifyta()` in :class:`~MPCsetup`.
+
+        :param horizon: The inval duration for which Uppaal stratego synthesizes a control strategy
+            each MPC step. Is given in the number of periods.
+        :type horizon: int
+        :param period: The interval duration after which the controller can change the control setting,
+            given in Uppaal Stratego time units.
+        :type period: int
+        :param final: The time that should be reached by the synthesized strategy, given in Uppaal
+            Stratego time units. Most likely this will be current time + *horizon* x *period*.
+        :type final: int
+        :param `*args`: Is not used in this method; it is included here to safely override the original
+            method.
+        :param `**kwargs`: Is not used in this method; it is included here to safely override the
+            original method.
         """
         result = self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
                                      verifyta_path=self.verifytacommand)
@@ -450,10 +473,20 @@ class SafeMPCSetup(MPCsetup):
             self.controller.remove_simfile()
         return result
 
-    def create_alternative_query_file(self, horizon, period, final) -> str:
+    def create_alternative_query_file(self, horizon, period, final):
         """
         Create an alternative query file in case the original query could not be satisfied by
         Stratego, i.e., it could not find a strategy.
+
+        :param horizon: The inval duration for which Uppaal stratego synthesizes a control strategy
+            each MPC step. Is given in the number of periods.
+        :type horizon: int
+        :param period: The interval duration after which the controller can change the control setting,
+            given in Uppaal Stratego time units.
+        :type period: int
+        :param final: The time that should be reached by the synthesized strategy, given in Uppaal
+            Stratego time units. Most likely this will be current time + *horizon* x *period*.
+        :type final: int
         """
         pass
 
