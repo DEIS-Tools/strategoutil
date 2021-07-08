@@ -249,7 +249,7 @@ class StrategoController:
         self.templatefile = modeltemplatefile
         self.simulationfile = modeltemplatefile.replace(".xml", "_sim.xml")
         self.cleanup = cleanup # TODO: this variable seems to be not used. Can it be safely removed?
-        self.states = model_cfg_dict
+        self.states = model_cfg_dict.copy()
         self.interactive_bash = interactive_bash
         self.tagRule = "//TAG_{}"
 
