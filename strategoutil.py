@@ -139,6 +139,20 @@ def merge_verifyta_args(cfg_dict):
     return args[1:]
 
 
+def check_tool_existance(name):
+    """
+    Check whether 'name' is on PATH and marked executable.
+
+    From `<https://stackoverflow.com/questions/11210104/check-if-a-program-exists-from-a-python-script>`_.
+
+    :param name: the name of the tool.
+    :type name: str
+    :return: True when the tool is found and executable, false otherwise.
+    :rtype: bool
+    """
+    return shutil.which(name) is not None
+
+
 def run_stratego(modelfile, queryfile="", learning_args=None, verifyta_command="verifyta",
                  interactive_bash=True):
     """
@@ -438,6 +452,9 @@ class MPCsetup:
         # Print the variable names and their initial values.
         self.print_state_vars()
         self.print_state()
+
+        if not check_tool_existance(self.verifyta_command):
+            raise RuntimeError("Cannot find the supplied verifyta command: " + self.verifyta_command)
 
         for step in range(duration):
             # Only print progress to stdout if results are printed to a file.
