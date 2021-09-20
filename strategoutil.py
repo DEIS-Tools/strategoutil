@@ -139,8 +139,21 @@ def merge_verifyta_args(cfg_dict):
     return args[1:]
 
 
-def run_stratego(modelfile, queryfile="", learning_args=None, verifyta_command="verifyta",
-                 interactive_bash=True):
+def check_tool_existance(name):
+    """
+    Check whether 'name' is on PATH and marked executable.
+
+    From `<https://stackoverflow.com/questions/11210104/check-if-a-program-exists-from-a-python-script>`_.
+
+    :param name: the name of the tool.
+    :type name: str
+    :return: True when the tool is found and executable, false otherwise.
+    :rtype: bool
+    """
+    return shutil.which(name) is not None
+
+
+def run_stratego(modelfile, queryfile="", learning_args=None, verifyta_command="verifyta"):
     """
     Run command line version of Uppaal Stratego.
 
@@ -156,9 +169,6 @@ def run_stratego(modelfile, queryfile="", learning_args=None, verifyta_command="
     :type learning_arg: dict
     :param verifyta_command: The command name for running Uppaal Stratego at the user's machine.
     :type verifyta_command: str
-    :param interactive_bash: Wether or not to run Uppaal Stratego with interactive bash. Interactive
-        bash uses `.bashrc`, such that the user's aliases are available.
-    :type interactive_bash: bool
     :return: The output as produced by Uppaal Stratego.
     :rtype: str
     """
@@ -172,15 +182,7 @@ def run_stratego(modelfile, queryfile="", learning_args=None, verifyta_command="
     args_list = [v for v in args.values() if v != ""]
     task = " ".join(args_list)
 
-    if interactive_bash:
-        # This version of the call ensures that the bash shell is started in interactive mode,
-        # thus using any aliases and path variable extensions defined in the user's .bashrc file.
-        process = subprocess.Popen(['/bin/bash', '-i', '-c', task],
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    else:
-        # This version of the call runs Uppaal Stratego using the Popen default shell.
-        process = subprocess.Popen(task, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+    process = subprocess.Popen(task, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     result = process.communicate()
     result = [r.decode("utf-8") for r in result]
     return result
@@ -233,9 +235,6 @@ class StrategoController:
     :type model_cfg_dict: dict
     :param cleanup: Whether or not to clean up the temporarily simulation file after being used.
     :type cleanup: bool
-    :param interactive_bash: Wether or not to run Uppaal Stratego with interactive bash. Interactive
-        bash uses `.bashrc`, such that the user's aliases are available.
-    :type interactive_bash: bool
     :ivar states: Dictionary containing the current state of the system, where a state is a pair of
         variable name and value. It is initialized with the values from *model_cfg_dict*.
     :vartype states: bool
@@ -245,12 +244,11 @@ class StrategoController:
     :vartype tagRule: str
     """
 
-    def __init__(self, modeltemplatefile, model_cfg_dict, cleanup=True, interactive_bash=True):
+    def __init__(self, modeltemplatefile, model_cfg_dict, cleanup=True):
         self.templatefile = modeltemplatefile
         self.simulationfile = modeltemplatefile.replace(".xml", "_sim.xml")
         self.cleanup = cleanup # TODO: this variable seems to be not used. Can it be safely removed?
         self.states = model_cfg_dict.copy()
-        self.interactive_bash = interactive_bash
         self.tagRule = "//TAG_{}"
 
     def init_simfile(self):
@@ -353,8 +351,7 @@ class StrategoController:
         :rtype: str
         """
         learning_args = {} if learning_args is None else learning_args
-        output = run_stratego(self.simulationfile, queryfile,
-                              learning_args, verifyta_command, self.interactive_bash)
+        output = run_stratego(self.simulationfile, queryfile, learning_args, verifyta_command)
         return output[0]
 
 
@@ -391,16 +388,13 @@ class MPCsetup:
     :type action_variable: str
     :param debug: Whether or not to run in debug mode.
     :type debug: bool
-    :param interactive_bash: Wether or not to run Uppaal Stratego with interactive bash. Interactive
-        bash uses `.bashrc`, such that the user's aliases are available.
-    :type interactive_bash: bool
     :ivar controller: The controller object used for interacting with Uppaal Stratego.
     :vartype controller: :class:`~StrategoController`
     """
 
     def __init__(self, modeltemplatefile, output_file_path=None, queryfile="", model_cfg_dict=None,
                  learning_args=None, verifyta_command="verifyta", external_simulator=False,
-                 action_variable=None, debug=False, interactive_bash=True):
+                 action_variable=None, debug=False):
         self.modeltemplatefile = modeltemplatefile
         self.output_file_path = output_file_path
         self.queryfile = queryfile
@@ -411,8 +405,7 @@ class MPCsetup:
         if external_simulator: assert(action_variable in model_cfg_dict.keys())
         self.action_variable = action_variable
         self.debug = debug
-        self.controller = StrategoController(self.modeltemplatefile, self.model_cfg_dict,
-                                             interactive_bash=interactive_bash)
+        self.controller = StrategoController(self.modeltemplatefile, self.model_cfg_dict)
 
     def run(self, controlperiod, horizon, duration, **kwargs):
         """
@@ -438,6 +431,9 @@ class MPCsetup:
         # Print the variable names and their initial values.
         self.print_state_vars()
         self.print_state()
+
+        if not check_tool_existance(self.verifyta_command):
+            raise RuntimeError("Cannot find the supplied verifyta command: " + self.verifyta_command)
 
         for step in range(duration):
             # Only print progress to stdout if results are printed to a file.

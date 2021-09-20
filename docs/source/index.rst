@@ -9,6 +9,7 @@ provides an interface to perform model-predictive control or online-control.
    :maxdepth: 3
    :caption: Contents:
 
+   installation
    api
 
 
