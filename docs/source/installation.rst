@@ -173,6 +173,6 @@ file contains
       PATH="$HOME/.local/bin:$PATH"
   fi
 
-If the file is missing this part, someting might be miss with your Linux OS, as this file comes with
+If the file is missing this part, someting might be wrong with your Linux OS, as this file comes with
 the standard installation of Linux and will not be altered by most users. Therefore, instead of
 adding the above lines to the file, it might be better to just reinstall your Linux OS.
