@@ -45,9 +45,9 @@ unzip the file with
   unzip <name of uppaal stratego file>.zip -d $HOME/.local/bin
 
 where ``<name of uppaal stratego file>.zip`` is the name of the downloaded file (depending on the version
-you dowloaded), for example ``uppaal64-4.1.20-stratego-7.zip``.
+you downloaded), for example ``uppaal64-4.1.20-stratego-7.zip``.
 
-Navigat to the ``$HOME/.local/bin`` folder with
+Navigate to the ``$HOME/.local/bin`` folder with
 
 .. code-block:: sh
 
@@ -65,16 +65,23 @@ Now we will create a symbolic link to the UPPAAL Stratego engine:
 
 .. code-block:: sh
 
-  ln -s <name of uppaal stratego file>/bin-Linux/verifyta <short name>
+  ln -s <name of uppaal stratego file>/bin/verifyta <short name>
 
 ``<short name>`` can be any name you like, but it will become the command that you (and, in fact,
 *strategoutil*) call from a terminal. The suggestion is to always include the version number of the
-downloaded UPPAAL Stratego. For example, if you downloaded ``uppaal64-4.1.20-stratego-7.zip``,
-then ``verifyta-stratego-7`` can be a good name, and the full command for the symbolic link becomes
+downloaded UPPAAL Stratego. For example, if you downloaded ``uppaal-4.1.20-stratego-9-linux64.zip``,
+then ``verifyta-stratego-9`` can be a good name, and the full command for the symbolic link becomes
 
 .. code-block:: sh
 
-  ln -s uppaal64-4.1.20-stratego-7/bin-Linux/verifyta verifyta-stratego-7
+  ln -s uppaal-4.1.20-stratego-9-linux64/bin/verifyta verifyta-stratego-9
+
+.. note:: In UPPAAL Stratego versions 7 and lower, the folder structure was slightly different.
+  For these lower versions you need to create the symbolic link with:
+
+  .. code-block:: sh
+
+    ln -s <name of uppaal stratego file>/bin-Linux/verifyta <short name>
 
 Verify that the symbolic link is created correctly by typing
 
@@ -97,7 +104,7 @@ and type
 
   <short name> -h
 
-with the short name of the symbolic link, for example ``verifyta-stratego-7``. The command line
+with the short name of the symbolic link, for example ``verifyta-stratego-9``. The command line
 manual of UPPAAL Stratego should now be printed. If so, we are ready to go. Otherwise, look at
 :ref:`installation_problems`.
 
@@ -145,7 +152,7 @@ UPPAAL Stratego command cannot be found
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If *strategoutil* generates the runtime error ``Cannot find the supplied verifyta command:`` or a
-terminal fails with ``command not found``, the sybolic link to UPPAAL Stratego is not in the path
+terminal fails with ``command not found``, the symbolic link to UPPAAL Stratego is not in the path
 variable.
 
 We will first verify that the path variable is indeed the problem by opening a terminal and type
@@ -173,6 +180,6 @@ file contains
       PATH="$HOME/.local/bin:$PATH"
   fi
 
-If the file is missing this part, someting might be wrong with your Linux OS, as this file comes with
+If the file is missing this part, something might be wrong with your Linux OS, as this file comes with
 the standard installation of Linux and will not be altered by most users. Therefore, instead of
 adding the above lines to the file, it might be better to just reinstall your Linux OS.
