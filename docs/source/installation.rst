@@ -45,7 +45,7 @@ unzip the file with
   unzip <name of uppaal stratego file>.zip -d $HOME/.local/bin
 
 where ``<name of uppaal stratego file>.zip`` is the name of the downloaded file (depending on the version
-you downloaded), for example ``uppaal64-4.1.20-stratego-7.zip``.
+you downloaded), for example ``uppaal-4.1.20-stratego-9-linux64.zip``.
 
 Navigate to the ``$HOME/.local/bin`` folder with
 
