@@ -130,11 +130,12 @@ and ``perform_at_start_iteration``.
             Overrides SafeMPCsetup.create_query_file().
             """
             with open(self.queryfile, "w") as f:
-                line1 = f"strategy opt = minE (c) [<={horizon}*{period}]: <> (t=={fil} && o <= 0)\n"
+                line1 = f"strategy opt = minE (c) [<={horizon}*{period}]: " \
+                        f"<> (t=={final} && o <= 0)\n"
                 f.write(line1)
                 f.write("\n")
                 line2 = f"simulate 1 [<={period}+1] {{" \
-                         f"{self.controller.get_var_names_as_string()} }} under opt\n"
+                        f"{self.controller.get_var_names_as_string()} }} under opt\n"
                 f.write(line2)
 
         def create_alternative_query_file(self, horizon, period, final):
