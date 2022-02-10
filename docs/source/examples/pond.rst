@@ -130,11 +130,12 @@ and ``perform_at_start_iteration``.
             Overrides SafeMPCsetup.create_query_file().
             """
             with open(self.queryfile, "w") as f:
-                line1 = "strategy opt = minE (c) [<={}*{}]: <> (t=={} && o <= 0)\n"
-                f.write(line1.format(horizon, period, final))
+                line1 = f"strategy opt = minE (c) [<={horizon}*{period}]: <> (t=={fil} && o <= 0)\n"
+                f.write(line1)
                 f.write("\n")
-                line2 = "simulate 1 [<={}+1] {{ {} }} under opt\n"
-                f.write(line2.format(period,self.controller.get_var_names_as_string()))
+                line2 = f"simulate 1 [<={period}+1] {{" \
+                         f"{self.controller.get_var_names_as_string()} }} under opt\n"
+                f.write(line2)
 
         def create_alternative_query_file(self, horizon, period, final):
             """
@@ -145,11 +146,12 @@ and ``perform_at_start_iteration``.
             Overrides SafeMPCsetup.create_alternative_query_file().
             """
             with open(self.queryfile, "w") as f:
-                line1 = "strategy opt = minE (w) [<={}*{}]: <> (t=={})\n"
+                line1 = f"strategy opt = minE (w) [<={horizon}*{period}]: <> (t=={final})\n"
                 f.write(line1.format(horizon, period, final))
                 f.write("\n")
-                line2 = "simulate 1 [<={}+1] {{ {} }} under opt\n"
-                f.write(line2.format(period, self.controller.get_var_names_as_string()))
+                line2 = f"simulate 1 [<={period}+1] " \
+                        f"{{ {self.controller.get_var_names_as_string()} }} under opt\n"
+                f.write(line2)
 
         def perform_at_start_iteration(self, controlperiod, horizon, duration, step, **kwargs):
             """
@@ -167,8 +169,7 @@ and ``perform_at_start_iteration``.
 
 
 In method ``create_query_file`` we specify the strategy synthesis query. For the pond case,
-we have this defined with ``line1``. Observe that the python place holders ``{}`` are replaced
-by the variables ``horizon``, ``period``, and ``final`` at the next line. It states that
+we have this defined with ``line1``. It states that
 we want to synthesize a strategy that we call ``opt`` that minimizes the expected value of
 clock variable :math:`c` (representing the cost in the model) where all runs have a maximum duration of
 the number of periods (denoted by ``horizon``) and UPPAAL Stratego time units per period
