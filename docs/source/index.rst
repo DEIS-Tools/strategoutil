@@ -6,12 +6,25 @@ Welcome to strategoutil's documentation!
 provides an interface to perform model-predictive control or online-control.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :hidden:
+   :caption: Installation
 
    installation
-   api
 
+
+.. toctree::
+   :hidden:
+   :caption: Examples
+
+   examples/index
+   examples/pond
+
+
+.. toctree::
+   :hidden:
+   :caption: Reference
+
+   api
 
 Getting started
 ---------------
