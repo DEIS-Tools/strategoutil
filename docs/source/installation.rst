@@ -159,7 +159,7 @@ variable.
 
 We will first verify that the path variable is indeed the problem by opening a terminal and type
 
-.. code-block::
+.. code-block:: sh
 
   echo $PATH
 
@@ -172,8 +172,15 @@ missing, both *strategoutil* and the terminal cannot find it.
   that UPPAAL Stratego is working when you call it with your terminal while *strategoutil* produces
   this runtime error.
 
-The user's bin folder is added to the path variable in `/etc/skel/.profile`. Make sure that this
-file contains
+You could temporarily solve the problem by running your script with *strategoutil* from the command
+line with
+
+.. code-block:: sh
+
+  PATH=$HOME/.local/bin:$PATH python3 <name of script>
+
+If you want to do a more thorough investigation, we will inspect the file `/etc/skel/.profile`, where
+the user's bin folder is added to the path variable. Make sure that this file contains
 
 .. code-block:: sh
 
