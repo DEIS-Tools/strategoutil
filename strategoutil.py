@@ -15,6 +15,10 @@ def get_int_tuples(text):
     :rtype: list
     """
     string_tuples = re.findall(r"\((\d+),(\d+)\)", text)
+    if string_tuples is None:
+        raise RuntimeError(
+            "Output of Stratego has not the expected format of a list of tuples. Please check the "
+            "output manually for error messages: \n" + text)
     int_tuples = [(int(t[0]), int(t[1])) for t in string_tuples]
     return int_tuples
 
@@ -31,11 +35,15 @@ def get_float_tuples(text):
     float_re = r"([-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
     pattern = r"\(" + float_re + "," + float_re + r"\)"
     string_tuples = re.findall(pattern, text)
+    if string_tuples is None:
+        raise RuntimeError(
+            "Output of Stratego has not the expected format of a list of tuples. Please check the "
+            "output manually for error messages: \n" + text)
     float_tuples = [(float(t[0]), float(t[4])) for t in string_tuples]
     return float_tuples
 
 
-def extract_state(text, var, controlperiod):
+def extract_state(text, var, control_period):
     """
     Extract the state from the Uppaal Stratego output at the end of the simulated control period.
 
@@ -43,26 +51,30 @@ def extract_state(text, var, controlperiod):
     :type text: str
     :param var: The variable name.
     :type var: str
-    :param controlperiod: The interval duration after which the controller can change the control
+    :param control_period: The interval duration after which the controller can change the control
         setting, given in Uppaal Stratego time units.
-    :type controlperiod: int
-    :return: The value of the variable at the end of *controlperiod*.
+    :type control_period: int
+    :return: The value of the variable at the end of *control_period*.
     :rtype: float
     """
     float_re = r"[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?"
     pattern = var + r":\n\[0\]:( \(" + float_re + "," + float_re + r"\))*"
     result = re.search(pattern, text)
+    if result is None:
+        raise RuntimeError(
+            "Output of Stratego has not the expected format. Please check the output manually for "
+            "error messages: \n" + text)
     float_tuples = get_float_tuples(result.group())
     x, y = 0.0, 0.0
-    lastvalue = 0.0
+    last_value = 0.0
     p = 1
     for t in float_tuples:
-        while p * controlperiod < t[0]:
-            lastvalue = y + (p * controlperiod - x) * (t[1] - y) / (t[0] - x)
+        while p * control_period < t[0]:
+            last_value = y + (p * control_period - x) * (t[1] - y) / (t[0] - x)
             p += 1
         x = t[0]
         y = t[1]
-    return lastvalue
+    return last_value
 
 
 def get_duration_action(tuples, max_time=None):
@@ -98,8 +110,8 @@ def insert_to_modelfile(model_file, tag, inserted):
     :type inserted: str
     """
     with open(model_file, "r+") as f:
-        modeltext = f.read()
-        text = modeltext.replace(tag, inserted, 1)
+        model_text = f.read()
+        text = model_text.replace(tag, inserted, 1)
         f.seek(0)
         f.write(text)
         f.truncate()
@@ -140,7 +152,7 @@ def merge_verifyta_args(cfg_dict):
     return args[1:]
 
 
-def check_tool_existance(name):
+def check_tool_existence(name):
     """
     Check whether 'name' is on PATH and marked executable.
 
@@ -154,14 +166,14 @@ def check_tool_existance(name):
     return shutil.which(name) is not None
 
 
-def run_stratego(modelfile, queryfile="", learning_args=None, verifyta_command="verifyta"):
+def run_stratego(model_file, query_file="", learning_args=None, verifyta_command="verifyta"):
     """
     Run command line version of Uppaal Stratego.
 
-    :param modelfile: The file name of the model.
-    :type modelfile: str
-    :param queryfile: The file name of the query.
-    :type queryfile: str
+    :param model_file: The file name of the model.
+    :type model_file: str
+    :param query_file: The file name of the query.
+    :type query_file: str
     :param learning_args: Dictionary containing the learning parameters and their values. The
         learning parameter names should be those used in the command line interface of Uppaal
         Stratego. You can also include non-learning command line parameters in this dictionary.
@@ -176,8 +188,8 @@ def run_stratego(modelfile, queryfile="", learning_args=None, verifyta_command="
     learning_args = {} if learning_args is None else learning_args
     args = {
         "verifyta": verifyta_command,
-        "model": modelfile,
-        "query": queryfile,
+        "model": model_file,
+        "query": query_file,
         "config": merge_verifyta_args(learning_args)
     }
     args_list = [v for v in args.values() if v != ""]
@@ -229,8 +241,8 @@ class StrategoController:
     """
     Controller class to interface with UPPAAL Stratego through python.
 
-    :param modeltemplatefile: The file name of the template model.
-    :type modeltemplatefile: str
+    :param model_template_file: The file name of the template model.
+    :type model_template_file: str
     :param model_cfg_dict: Dictionary containing pairs of state variable name and its initial
         value. The state variable name should match the tag name in the template model.
     :type model_cfg_dict: dict
@@ -245,9 +257,9 @@ class StrategoController:
     :vartype tagRule: str
     """
 
-    def __init__(self, modeltemplatefile, model_cfg_dict, cleanup=True):
-        self.templatefile = modeltemplatefile
-        self.simulationfile = modeltemplatefile.replace(".xml", "_sim.xml")
+    def __init__(self, model_template_file, model_cfg_dict, cleanup=True):
+        self.template_file = model_template_file
+        self.simulation_file = model_template_file.replace(".xml", "_sim.xml")
         self.cleanup = cleanup  # TODO: this variable seems to be not used. Can it be safely removed?
         self.states = model_cfg_dict.copy()
         self.tagRule = "//TAG_{}"
@@ -256,13 +268,13 @@ class StrategoController:
         """
         Make a copy of a template file where data of specific variables is inserted.
         """
-        shutil.copyfile(self.templatefile, self.simulationfile)
+        shutil.copyfile(self.template_file, self.simulation_file)
 
     def remove_simfile(self):
         """
         Clean created temporary files after the simulation is finished.
         """
-        os.remove(self.simulationfile)
+        os.remove(self.simulation_file)
 
     def debug_copy(self, debug_file):
         """
@@ -271,7 +283,7 @@ class StrategoController:
         :param debug_file: The file name of the debug file.
         :type debug_file: str
         """
-        shutil.copyfile(self.simulationfile, debug_file)
+        shutil.copyfile(self.simulation_file, debug_file)
 
     def update_state(self, new_values):
         """
@@ -290,7 +302,7 @@ class StrategoController:
         """
         for name, value in self.states.items():
             tag = self.tagRule.format(name)
-            insert_to_modelfile(self.simulationfile, tag, str(value))
+            insert_to_modelfile(self.simulation_file, tag, str(value))
 
     def get_var_names_as_string(self):
         """
@@ -333,13 +345,13 @@ class StrategoController:
         """
         return self.states
 
-    def run(self, queryfile="", learning_args=None, verifyta_command="verifyta"):
+    def run(self, query_file="", learning_args=None, verifyta_command="verifyta"):
         """
         Runs verifyta with requested queries and parameters that are either part of the \*.xml model
         file or explicitly specified.
 
-        :param queryfile: The file name of the query file where the queries are written to.
-        :type queryfile: str
+        :param query_file: The file name of the query file where the queries are written to.
+        :type query_file: str
         :param learning_args: Dictionary containing the learning parameters and their values. The
             learning parameter names should be those used in the command line interface of Uppaal
             Stratego. You can also include non-learning command line parameters in this dictionary.
@@ -352,7 +364,7 @@ class StrategoController:
         :rtype: str
         """
         learning_args = {} if learning_args is None else learning_args
-        output = run_stratego(self.simulationfile, queryfile, learning_args, verifyta_command)
+        output = run_stratego(self.simulation_file, query_file, learning_args, verifyta_command)
         return output[0]
 
 
@@ -362,12 +374,12 @@ class MPCsetup:
 
     The class parameters are also available as attributes.
 
-    :param modeltemplatefile: The file name of the template model.
-    :type modeltemplatefile: str
+    :param model_template_file: The file name of the template model.
+    :type model_template_file: str
     :param output_file_path: The file name of the output file where the results are printed to.
     :type output_file_path: str
-    :param queryfile: The file name of the query file where the queries are written to.
-    :type queryfile: str
+    :param query_file: The file name of the query file where the queries are written to.
+    :type query_file: str
     :param model_cfg_dict: Dictionary containing pairs of state variable name and its initial
         value. The state variable name should match the tag name in the template model.
     :type model_cfg_dict: dict
@@ -393,30 +405,32 @@ class MPCsetup:
     :vartype controller: :class:`~StrategoController`
     """
 
-    def __init__(self, modeltemplatefile, output_file_path=None, queryfile="", model_cfg_dict=None,
-                 learning_args=None, verifyta_command="verifyta", external_simulator=False,
-                 action_variable=None, debug=False):
-        self.modeltemplatefile = modeltemplatefile
+    def __init__(self, model_template_file, output_file_path=None, query_file="",
+                 model_cfg_dict=None, learning_args=None, verifyta_command="verifyta",
+                 external_simulator=False, action_variable=None, debug=False):
+        self.model_template_file = model_template_file
         self.output_file_path = output_file_path
-        self.queryfile = queryfile
+        self.query_file = query_file
         self.model_cfg_dict = {} if model_cfg_dict is None else model_cfg_dict
         self.learning_args = {} if learning_args is None else learning_args
         self.verifyta_command = verifyta_command
         self.external_simulator = external_simulator
-        if external_simulator:
-            assert (action_variable in model_cfg_dict.keys())
+        if external_simulator and action_variable not in model_cfg_dict.keys():
+            raise RuntimeError(
+                f"The provided action variable {action_variable} is not defined as a model variable"
+                f"in the model configuration.")
         self.action_variable = action_variable
         self.debug = debug
-        self.controller = StrategoController(self.modeltemplatefile, self.model_cfg_dict)
+        self.controller = StrategoController(self.model_template_file, self.model_cfg_dict)
 
-    def step_without_sim(self, controlperiod, horizon, duration, step, **kwargs):
+    def step_without_sim(self, control_period, horizon, duration, step, **kwargs):
         """
         Perform a step in the basic MPC scheme without the simulation of the synthesized strategy.
 
-        :param controlperiod: The interval duration after which the controller can change the
+        :param control_period: The interval duration after which the controller can change the
             control setting, given in Uppaal Stratego time units.
-        :type controlperiod: int
-        :param horizon: The inval duration for which Uppaal stratego synthesizes a control strategy
+        :type control_period: int
+        :param horizon: The interval duration for which Uppaal stratego synthesizes a control strategy
             each MPC step. Is given in the number of control periods.
         :type horizon: int
         :param duration: The number of times (steps) the MPC scheme should be performed, given as
@@ -431,7 +445,7 @@ class MPCsetup:
         :rtype: str
         """
         # Perform some customizable preprocessing at each step.
-        self.perform_at_start_iteration(controlperiod, horizon, duration, step, **kwargs)
+        self.perform_at_start_iteration(control_period, horizon, duration, step, **kwargs)
 
         # At each MPC step we want a clean template copy to insert variables.
         self.controller.init_simfile()
@@ -441,18 +455,18 @@ class MPCsetup:
 
         # To debug errors from verifyta one can save intermediate simulation file.
         if self.debug:
-            self.controller.debug_copy(self.modeltemplatefile.replace(".xml", "_debug.xml"))
+            self.controller.debug_copy(self.model_template_file.replace(".xml", "_debug.xml"))
 
         # Create the new query file for the next step.
-        final = horizon * controlperiod + self.controller.get_state("t")
-        self.create_query_file(horizon, controlperiod, final)
+        final = horizon * control_period + self.controller.get_state("t")
+        self.create_query_file(horizon, control_period, final)
 
         # Run a verifyta query to simulate optimal strategy.
-        result = self.run_verifyta(horizon, controlperiod, final)
+        result = self.run_verifyta(horizon, control_period, final)
 
         return result
 
-    def run_single(self, controlperiod, horizon, **kwargs):
+    def run_single(self, control_period, horizon, **kwargs):
         """
         Run the basic MPC scheme a single step where a single controller strategy is calculated,
         where the strategy synthesis looks the horizon ahead, and continues for the duration of the
@@ -461,26 +475,26 @@ class MPCsetup:
         The control period is in Uppaal Stratego time units. Horizon have control period as time
         unit.
 
-        :param controlperiod: The interval duration after which the controller can change the
+        :param control_period: The interval duration after which the controller can change the
             control setting, given in Uppaal Stratego time units.
-        :type controlperiod: int
-        :param horizon: The inval duration for which Uppaal stratego synthesizes a control strategy
+        :type control_period: int
+        :param horizon: The interval duration for which Uppaal stratego synthesizes a control strategy
             each MPC step. Is given in the number of control periods.
         :type horizon: int
         :param `**kwargs`: Any additional parameters are forwarded to
             :meth:`~MPCsetup.perform_at_start_iteration`.
         :return: The control action chosen for the first control period.
         """
-        if not check_tool_existance(self.verifyta_command):
+        if not check_tool_existence(self.verifyta_command):
             raise RuntimeError(
-                "Cannot find the supplied verifyta command: " + self.verifyta_command)
+                f"Cannot find the supplied verifyta command: {self.verifyta_command}")
 
-        result = self.step_without_sim(controlperiod, horizon, 1, 0, **kwargs)
+        result = self.step_without_sim(control_period, horizon, 1, 0, **kwargs)
         chosen_action = self.extract_control_action_from_stratego(result)
 
         return chosen_action
 
-    def run(self, controlperiod, horizon, duration, **kwargs):
+    def run(self, control_period, horizon, duration, **kwargs):
         """
         Run the basic MPC scheme where the controller can changes its strategy once every period,
         where the strategy synthesis looks the horizon ahead, and continues for the duration of the
@@ -489,10 +503,10 @@ class MPCsetup:
         The control period is in Uppaal Stratego time units. Both horizon and duration have control
         period as time unit.
 
-        :param controlperiod: The interval duration after which the controller can change the
+        :param control_period: The interval duration after which the controller can change the
             control setting, given in Uppaal Stratego time units.
-        :type controlperiod: int
-        :param horizon: The inval duration for which Uppaal stratego synthesizes a control strategy
+        :type control_period: int
+        :param horizon: The interval duration for which Uppaal stratego synthesizes a control strategy
             each MPC step. Is given in the number of control periods.
         :type horizon: int
         :param duration: The number of times (steps) the MPC scheme should be performed, given as
@@ -505,28 +519,28 @@ class MPCsetup:
         self.print_state_vars()
         self.print_state()
 
-        if not check_tool_existance(self.verifyta_command):
+        if not check_tool_existence(self.verifyta_command):
             raise RuntimeError(
-                "Cannot find the supplied verifyta command: " + self.verifyta_command)
+                f"Cannot find the supplied verifyta command: {self.verifyta_command}")
 
         for step in range(duration):
             # Only print progress to stdout if results are printed to a file.
             if self.output_file_path:
                 print_progress_bar(step, duration, "progress")
 
-            result = self.step_without_sim(controlperiod, horizon, duration, step, **kwargs)
+            result = self.step_without_sim(control_period, horizon, duration, step, **kwargs)
 
             if self.external_simulator:
                 # An external simulator is used to generate the new 'true' state.
                 chosen_action = self.extract_control_action_from_stratego(result)
-                new_state = self.run_external_simulator(chosen_action, controlperiod, step,
+                new_state = self.run_external_simulator(chosen_action, control_period, step,
                                                         **kwargs)
                 self.controller.update_state(new_state)
 
             else:
                 # Extract the state from Uppaal results. This requires that the query file also
                 # includes a simulate query (see default query generator).
-                self.extract_states_from_stratego(result, controlperiod)
+                self.extract_states_from_stratego(result, control_period)
 
             # Print output.
             self.print_state()
@@ -536,7 +550,7 @@ class MPCsetup:
     def perform_at_start_iteration(self, *args, **kwargs):
         """
         Perform some customizable preprocessing steps at the start of each MPC iteration. This
-        method can be overritten for specific models.
+        method can be overwritten for specific models.
         """
         pass
 
@@ -547,7 +561,7 @@ class MPCsetup:
 
         You might want to override this method for specific models.
 
-        :param horizon: The inval duration for which Uppaal stratego synthesizes a control strategy
+        :param horizon: The interval duration for which Uppaal stratego synthesizes a control strategy
             each MPC step. Is given in the number of periods.
         :type horizon: int
         :param period: The interval duration after which the controller can change the control
@@ -557,7 +571,7 @@ class MPCsetup:
             Stratego time units. Most likely this will be current time + *horizon* x *period*.
         :type final: int
         """
-        with open(self.queryfile, "w") as f:
+        with open(self.query_file, "w") as f:
             line1 = "strategy opt = minE (c) [<={}*{}]: <> (t=={})\n"
             f.write(line1.format(horizon, period, final))
             f.write("\n")
@@ -575,14 +589,14 @@ class MPCsetup:
         :return: The output generated by Uppaal Stratego.
         :rtype: str
         """
-        result = self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
+        result = self.controller.run(query_file=self.query_file, learning_args=self.learning_args,
                                      verifyta_command=self.verifyta_command)
 
         if self.controller.cleanup:
             self.controller.remove_simfile()
         return result
 
-    def extract_states_from_stratego(self, result, controlperiod):
+    def extract_states_from_stratego(self, result, control_period):
         """
         Extract the new state values from the simulation output of Stratego.
 
@@ -590,41 +604,45 @@ class MPCsetup:
 
         :param result: The output as generated by Uppaal Stratego.
         :type result: str
-        :param controlperiod: The interval duration after which the controller can change the
+        :param control_period: The interval duration after which the controller can change the
             control setting, given in Uppaal Stratego time units.
-        :type controlperiod: int
+        :type control_period: int
         """
         new_state = {}
         for var, value in self.controller.get_states().items():
-            new_value = extract_state(result, var, controlperiod)
+            new_value = extract_state(result, var, control_period)
             if isinstance(value, int):
                 new_value = int(new_value)
             new_state[var] = new_value
         self.controller.update_state(new_state)
 
-    def extract_control_action_from_stratego(self, result):
+    def extract_control_action_from_stratego(self, stratego_output):
         """
         Extract the chosen control action for the first control period from the simulation output
         of Stratego.
 
-        :param result: The output as generated by Uppaal Stratego.
-        :type result: str
+        :param stratego_output: The output as generated by Uppaal Stratego.
+        :type stratego_output: str
         :return: The control action chosen for the first control period.
         :rtype: float
         """
         float_re = r"[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?"
         pattern = self.action_variable + r":\n\[0\]:( \(" + float_re + "," + float_re + r"\))*"
-        result = re.search(pattern, result)
+        result = re.search(pattern, stratego_output)
+        if result is None:
+            raise RuntimeError(
+                "Output of Stratego has not the expected format. Please check the output manually "
+                "for error messages: \n" + stratego_output)
         float_tuples = get_float_tuples(result.group())
-        lastvalue = 0.0
+        last_value = 0.0
 
         # The last tuple at time 0 represents the chosen control action.
         for t in float_tuples:
             if t[0] == 0:
-                lastvalue = t[1]
+                last_value = t[1]
             else:
                 break
-        return lastvalue
+        return last_value
 
     def run_external_simulator(self, chosen_action, *args, **kwargs):
         """
@@ -678,7 +696,7 @@ class SafeMPCSetup(MPCsetup):
     the user, as it depends on the model what a safe query would be.
     """
 
-    def run_verifyta(self, horizon, controlperiod, final, *args, **kwargs):
+    def run_verifyta(self, horizon, control_period, final, *args, **kwargs):
         """
         Run verifyta with the current data stored in this class.
 
@@ -687,12 +705,12 @@ class SafeMPCSetup(MPCsetup):
 
         Overrides :meth:`~MPCsetup.run_verifyta()` in :class:`~MPCsetup`.
 
-        :param horizon: The inval duration for which Uppaal stratego synthesizes a control strategy
+        :param horizon: The interval duration for which Uppaal stratego synthesizes a control strategy
             each MPC step. Is given in the number of periods.
         :type horizon: int
-        :param controlperiod: The interval duration after which the controller can change the
+        :param control_period: The interval duration after which the controller can change the
             control setting, given in Uppaal Stratego time units.
-        :type controlperiod: int
+        :type control_period: int
         :param final: The time that should be reached by the synthesized strategy, given in Uppaal
             Stratego time units. Most likely this will be current time + *horizon* x *period*.
         :type final: int
@@ -701,12 +719,12 @@ class SafeMPCSetup(MPCsetup):
         :param `**kwargs`: Is not used in this method; it is included here to safely override the
             original method.
         """
-        result = self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
+        result = self.controller.run(query_file=self.query_file, learning_args=self.learning_args,
                                      verifyta_command=self.verifyta_command)
 
         if not successful_result(result):
-            self.create_alternative_query_file(horizon, controlperiod, final)
-            result = self.controller.run(queryfile=self.queryfile, learning_args=self.learning_args,
+            self.create_alternative_query_file(horizon, control_period, final)
+            result = self.controller.run(query_file=self.query_file, learning_args=self.learning_args,
                                          verifyta_command=self.verifyta_command)
 
         if self.controller.cleanup:
@@ -718,7 +736,7 @@ class SafeMPCSetup(MPCsetup):
         Create an alternative query file in case the original query could not be satisfied by
         Stratego, i.e., it could not find a strategy.
 
-        :param horizon: The inval duration for which Uppaal stratego synthesizes a control strategy
+        :param horizon: The interval duration for which Uppaal stratego synthesizes a control strategy
             each MPC step. Is given in the number of periods.
         :type horizon: int
         :param period: The interval duration after which the controller can change the control
@@ -729,7 +747,3 @@ class SafeMPCSetup(MPCsetup):
         :type final: int
         """
         pass
-
-
-if __name__ == '__main__':
-    pass
