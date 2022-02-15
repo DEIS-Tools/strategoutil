@@ -405,9 +405,9 @@ class MPCsetup:
     :vartype controller: :class:`~StrategoController`
     """
 
-    def __init__(self, model_template_file, output_file_path=None, query_file="", model_cfg_dict=None,
-                 learning_args=None, verifyta_command="verifyta", external_simulator=False,
-                 action_variable=None, debug=False):
+    def __init__(self, model_template_file, output_file_path=None, query_file="",
+                 model_cfg_dict=None, learning_args=None, verifyta_command="verifyta",
+                 external_simulator=False, action_variable=None, debug=False):
         self.model_template_file = model_template_file
         self.output_file_path = output_file_path
         self.query_file = query_file
@@ -415,8 +415,10 @@ class MPCsetup:
         self.learning_args = {} if learning_args is None else learning_args
         self.verifyta_command = verifyta_command
         self.external_simulator = external_simulator
-        if external_simulator:
-            assert (action_variable in model_cfg_dict.keys())
+        if external_simulator and action_variable not in model_cfg_dict.keys():
+            raise RuntimeError(
+                f"The provided action variable {action_variable} is not defined as a model variable"
+                f"in the model configuration.")
         self.action_variable = action_variable
         self.debug = debug
         self.controller = StrategoController(self.model_template_file, self.model_cfg_dict)
@@ -485,7 +487,7 @@ class MPCsetup:
         """
         if not check_tool_existence(self.verifyta_command):
             raise RuntimeError(
-                "Cannot find the supplied verifyta command: " + self.verifyta_command)
+                f"Cannot find the supplied verifyta command: {self.verifyta_command}")
 
         result = self.step_without_sim(control_period, horizon, 1, 0, **kwargs)
         chosen_action = self.extract_control_action_from_stratego(result)
@@ -519,7 +521,7 @@ class MPCsetup:
 
         if not check_tool_existence(self.verifyta_command):
             raise RuntimeError(
-                "Cannot find the supplied verifyta command: " + self.verifyta_command)
+                f"Cannot find the supplied verifyta command: {self.verifyta_command}")
 
         for step in range(duration):
             # Only print progress to stdout if results are printed to a file.
