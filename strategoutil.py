@@ -745,7 +745,3 @@ class SafeMPCSetup(MPCsetup):
         :type final: int
         """
         pass
-
-
-if __name__ == '__main__':
-    pass
