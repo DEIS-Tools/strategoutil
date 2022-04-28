@@ -34,7 +34,7 @@ recommended way of installing UPPAAL Stratego for different operation systems.
 Linux
 ^^^^^
 
-Go to the `download page <https://people.cs.aau.dk/~marius/stratego/download.html>`_ of UPPAAL
+Go to the `download page <https://uppaal.org/downloads/>`_ of UPPAAL
 Stratego. On this page, choose the latest release and the right build (32-bit versus 64 bit Linux
 version). If you are doubting about your OS version, go to *Settings* |rarr| *about* |rarr| *OS Type*.
 After accepting the license, the download should start.
