@@ -2,7 +2,7 @@ Welcome to strategoutil's documentation!
 ========================================
 
 *Strategoutil* is a collection of utility functions and classes to interface
-`UPPAAL Stratego <https://people.cs.aau.dk/~marius/stratego/>`_ controllers with Python. It furthermore
+`UPPAAL Stratego <https://uppaal.org/features/#uppaal-stratego/>`_ controllers with Python. It furthermore
 provides an interface to perform model-predictive control or online-control.
 
 .. toctree::
@@ -39,7 +39,7 @@ Getting started
 
   .. code-block:: sh
 
-      git clone https://github.com/mihsamusev/strategoutil.git
+      git clone https://github.com/DEIS-Tools/strategoutil.git
       cd strategoutil
       pip install -e .
 
