@@ -39,7 +39,7 @@ Getting started
 
   .. code-block:: sh
 
-      git clone https://github.com/mihsamusev/strategoutil.git
+      git clone https://github.com/DEIS-Tools/strategoutil.git
       cd strategoutil
       pip install -e .
 
