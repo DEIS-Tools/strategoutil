@@ -6,7 +6,7 @@
 Storm water detention pond
 ==========================
 
-This part of the documentation demonstrates how *strategoutil* is used to perform online control
+This part of the documentation demonstrates how *STOMP* is used to perform online control
 for storm water detention ponds.
 
 --------------------
@@ -37,7 +37,7 @@ suitable for online control. That also has been the situation for this case. The
 from `this paper <doi.org/10.1016/j.ifacol.2021.08.467>`_ has been modified for this online
 model-predictive control setup.
 In this section, we do not discuss how to adjust a model suitable for offline control to one for 
-online control, but we indicate what you have to do specifically for using *strategoutil* tool to 
+online control, but we indicate what you have to do specifically for using *STOMPC* tool to
 perform this online control.
 
 In the UPPAAL Stratego model, we need to insert placeholders at the variables that will have
@@ -60,7 +60,7 @@ be replaced by the initial value of that variable. The UPPAAL Stratego GUI will 
 give a syntax error on the next line, as it cannot find the closing semicolon.
 
 After inserting all the placeholders in the UPPAAL Stratego model, we have to create a model
-configuration file. This file tells the *strategoutil* tool which variables it need to keep track of
+configuration file. This file tells the *STOMPC* tool which variables it need to keep track of
 during MPC, and what their initial values are for the very first step. The model configuration file
 has to be a yaml file, but you can use a custom name. For this case, we have the following
 ``pond_experiment_config.yaml`` file:
@@ -91,16 +91,16 @@ parameter does not have a value, for example ``nosummary``, you just leave the v
     silence-progress:
 
 
--------------------------------------------------------
-Specializing the SafeMPCSetup class from *strategoutil*
--------------------------------------------------------
+-------------------------------------------------
+Specializing the SafeMPCSetup class from *STOMPC*
+-------------------------------------------------
 
-The *strategoutil* tool provides several classes that can be tailored for the case you want to use
+The *STOMPC* tool provides several classes that can be tailored for the case you want to use
 it for.
 
 * ``MPCsetup``. This class is the primarily class an end-user should specialize for his or her
-  case. It implements the basic MPC scheme as explained in Section~\ref{sect:tooloverview}. It
-  assumes that UPPAAL Stratego will always success in synthesizing a safe and optimal strategy.
+  case. It implements the basic MPC scheme. It assumes that UPPAAL Stratego will always success in
+  synthesizing a safe and optimal strategy.
 * ``SafeMPCSetup``. This class inherits from ``MPCsetup``, yet it monitors and detects
   whether UPPAAL Stratego has successfully synthesized a strategy. If not, it will run UPPAAL
   Stratego with an alternative query, which has to be specified by the user, as it depends on the
@@ -222,7 +222,7 @@ the UPPAAL Stratego and SWMM models.
         learning_config_path = "verifyta_config.yaml"
         weather_forecast_path = "weather_forecast.csv"
         output_file_path = "stratego_result.txt"
-        verifyta_command = "verifyta-stratego-8-7"
+        verifyta_command = "verifyta-stratego-9"
 
         # Define MPC model variables.
         action_variable = "Open"  # Name of the control variable.
@@ -258,7 +258,7 @@ Finally, we can create the MPC object from our ``MPCSetupPond`` class:
 Combining strategy synthesis and simulation
 -------------------------------------------
 
-Finally, we need to actually define how *strategoutil* should combine UPPAAL Stratego and SWMM
+Finally, we need to actually define how *STOMP* should combine UPPAAL Stratego and SWMM
 together. Because SWMM is a stateful simulator from which we cannot extract the full state through
 the pySWMM API, we cannot use the default ``SafeMPCSetup.run`` method to perform MPC.
 Therefore, we will 'pause' the SWMM simulator after each step and let ``SafeMPCSetup`` perform

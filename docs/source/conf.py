@@ -19,11 +19,11 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'strategoutil'
-copyright = '2021, Mihhail Samusev and Martijn Goorden'
+copyright = '2022, Mihhail Samusev and Martijn Goorden'
 author = 'Mihhail Samusev and Martijn Goorden'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.3'
+release = '0.1.0'
 
 
 # -- General configuration ---------------------------------------------------

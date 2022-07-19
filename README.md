@@ -23,6 +23,9 @@ pip install -e .
 
 3) Look at the [documentation](https://strategoutil.readthedocs.io/en/latest/)
 ## Functionality
+Currently, *strategoutil* contains the tool *STOMPC* that is capable of performing the following
+actions:
+
 - Write input variables to Stratego model `*.xml` files
 - Parse outputs of `simulate` queries to get timeseries of important variables
 - Run `verifyta` with chosen query `*.q` and run parameters
