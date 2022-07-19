@@ -6,7 +6,7 @@
 Floor heating
 =============
 
-This part of the documentation demonstrates how *strategoutil* is used to perform online control
+This part of the documentation demonstrates how *STOMPC* is used to perform online control
 for floor heating in a family house.
 
 --------------------
@@ -29,7 +29,7 @@ suitable for online control. That also has been the situation for this case. The
 from `this paper <doi.org/10.1007/978-3-662-49674-9_14>`_ has been modified for this online
 model-predictive control setup.
 In this section, we do not discuss how to adjust a model suitable for offline control to one for 
-online control, but we indicate what you have to do specifically for using *strategoutil* tool to 
+online control, but we indicate what you have to do specifically for using *STOMP* tool to
 perform this online control.
 
 In the UPPAAL Stratego model, we need to insert placeholders at the variables that will have
@@ -52,7 +52,7 @@ be replaced by the initial value of that variable. The UPPAAL Stratego GUI will 
 give a syntax error on the next line, as it cannot find the closing semicolon.
 
 After inserting all the placeholders in the UPPAAL Stratego model, we have to create a model
-configuration file. This file tells the *strategoutil* tool which variables it need to keep track of
+configuration file. This file tells the *STOMP* tool which variables it need to keep track of
 during MPC, and what their initial values are for the very first step. The model configuration file
 has to be a yaml file, but you can use a custom name. For this case, we have the following
 ``floor-heating_config.yaml`` file:
@@ -89,11 +89,11 @@ parameter does not have a value, for example ``nosummary``, you just leave the v
     silence-progress:
 
 
----------------------------------------------------
-Specializing the MPCSetup class from *strategoutil*
----------------------------------------------------
+--------------------------------------------
+Specializing the MPCSetup class from *STOMP*
+--------------------------------------------
 
-The *strategoutil* tool provides several classes that can be tailored for the case you want to use
+The *STOMP* tool provides several classes that can be tailored for the case you want to use
 it for.
 
 * ``MPCsetup``. This class is the primarily class an end-user should specialize for his or her

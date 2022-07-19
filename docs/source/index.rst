@@ -3,7 +3,7 @@ Welcome to strategoutil's documentation!
 
 *Strategoutil* is a collection of utility functions and classes to interface
 `UPPAAL Stratego <https://uppaal.org/features/#uppaal-stratego/>`_ controllers with Python. It furthermore
-provides an interface to perform model-predictive control or online-control.
+provides an interface to perform model-predictive control or online-control using *STOMPC*.
 
 .. toctree::
    :hidden:
@@ -44,10 +44,13 @@ Getting started
       cd strategoutil
       pip install -e .
 
-2) Look how *strategoutil* is used with `example projects <https://github.com/mihsamusev/stratego_mpc_example>`_
+2) Look how *strategoutil* is used in :ref:`example_index`.
 
 Functionality
 -------------
+
+Currently, *strategoutil* contains the tool *STOMPC* that is capable of performing the following
+actions:
 
 - Write input variables to Stratego model *\*.xml* files
 - Parse outputs of *simulate* queries to get timeseries of important variables
