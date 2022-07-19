@@ -19,6 +19,7 @@ provides an interface to perform model-predictive control or online-control usin
    examples/index
    examples/floor-heating
    examples/pond
+   examples/traffic-light
 
 
 .. toctree::

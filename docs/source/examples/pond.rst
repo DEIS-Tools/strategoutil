@@ -6,7 +6,7 @@
 Storm water detention pond
 ==========================
 
-This part of the documentation demonstrates how *STOMP* is used to perform online control
+This part of the documentation demonstrates how *STOMPC* is used to perform online control
 for storm water detention ponds.
 
 --------------------
@@ -258,7 +258,7 @@ Finally, we can create the MPC object from our ``MPCSetupPond`` class:
 Combining strategy synthesis and simulation
 -------------------------------------------
 
-Finally, we need to actually define how *STOMP* should combine UPPAAL Stratego and SWMM
+Finally, we need to actually define how *STOMPC* should combine UPPAAL Stratego and SWMM
 together. Because SWMM is a stateful simulator from which we cannot extract the full state through
 the pySWMM API, we cannot use the default ``SafeMPCSetup.run`` method to perform MPC.
 Therefore, we will 'pause' the SWMM simulator after each step and let ``SafeMPCSetup`` perform
