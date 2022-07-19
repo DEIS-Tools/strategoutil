@@ -11,3 +11,4 @@ case studies. The following examples are currently available:
 
 * :ref:`example_floor-heating`
 * :ref:`example_pond`
+* :ref:`example_traffic-light`
