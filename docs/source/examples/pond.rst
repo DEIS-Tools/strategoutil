@@ -99,8 +99,8 @@ The *strategoutil* tool provides several classes that can be tailored for the ca
 it for.
 
 * ``MPCsetup``. This class is the primarily class an end-user should specialize for his or her
-  case. It implements the basic MPC scheme as explained in Section~\ref{sect:tooloverview}. It
-  assumes that UPPAAL Stratego will always success in synthesizing a safe and optimal strategy.
+  case. It implements the basic MPC scheme. It assumes that UPPAAL Stratego will always success in
+  synthesizing a safe and optimal strategy.
 * ``SafeMPCSetup``. This class inherits from ``MPCsetup``, yet it monitors and detects
   whether UPPAAL Stratego has successfully synthesized a strategy. If not, it will run UPPAAL
   Stratego with an alternative query, which has to be specified by the user, as it depends on the

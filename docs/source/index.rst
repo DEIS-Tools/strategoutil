@@ -17,6 +17,7 @@ provides an interface to perform model-predictive control or online-control.
    :caption: Examples
 
    examples/index
+   examples/floor-heating
    examples/pond
 
 
