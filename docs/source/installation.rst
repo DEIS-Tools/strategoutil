@@ -31,6 +31,9 @@ UPPAAL Stratego
 with UPPAAL Stratego, so you have to install this by yourself. Follow the instructions below for the
 recommended way of installing UPPAAL Stratego for different operation systems.
 
+.. note:: Since UPPAAL 5, UPPAAL Stratego is part of UPPAAL itself. It is recommended to download UPPAAL 5
+  instead of UPPAAL Stratego. The installation instructions below still apply for UPPAAL 5.
+
 Linux
 ^^^^^
 
@@ -118,7 +121,65 @@ Windows
 MacOS
 ^^^^^
 
-.. todo:: No instructions yet.
+Go to the `download page <https://uppaal.org/downloads/>`_ of UPPAAL
+Stratego. On this page, choose the latest release and the right build.
+After accepting the license, the download should start.
+
+Unzip the downloaded file. As a result, you should now have a ``.app`` file.
+Move the ``.app`` file to your ``Applications`` folder.
+
+You can now UPPAAL app from the Applications folder.
+macOS may put Uppaal into quarantine and suggest to “Move to Bin”.
+
+1) Dismiss the popup with error message "UPPAAL" can't be opened because Apple cannot check it for malicious software or "UPPAAL" can't be opened because it was not downloaded from the App store by clicking OK.
+2) Go to the Apple menu, select System Settings..., click Privacy & Security in the sidebar, and then scroll down to the Security section on the right.
+3) Under Allow apps downloaded from, click the Open Anyway button just after "UPPAAL.app" was blocked from use because it is not from an identified developer, to allow the UPPAAL app to be executed.
+4) Approve the application with your credentials in the next popup.
+5) Start UPPAAL again (if not restarted automatically), and when the popup appears with the same error message as before, click Open.
+
+Once successfully opened, we will now create a symbolic link to the UPPAAL engine:
+
+.. code-block:: sh
+
+  cd /usr/local/bin
+  ln -s /Applications/<name of uppaal app file>/Contents/Resources/uppaal/bin/verifyta <short name>
+
+``<short name>`` can be any name you like, but it will become the command that you (and, in fact,
+*strategoutil*) call from a terminal. The suggestion is to always include the version number of the
+downloaded UPPAAL Stratego. For example, if you downloaded ``uppaal-4.1.20-stratego-9-app.zip``,
+then ``verifyta-stratego-9`` can be a good name, and the full command for the symbolic link becomes
+
+.. code-block:: sh
+
+  ln -s /Applications/uppaal-4.1.20-stratego-9.app/Contents/Resources/uppaal/bin/verifyta verifyta-stratego-9
+
+.. note:: UPPAAL Stratego versions 7 and lower are not build for macOS.
+
+Verify that the symbolic link is created correctly by typing
+
+.. code-block:: sh
+
+  <short name> -h
+
+with the short name of the symbolic link, for example ``verifyta-stratego-9``. The command line
+manual of UPPAAL Stratego should now be printed.
+
+Finally, we check whether the symbolic link we created is recognized anywhere in the system. First,
+navigate to another random folder, for example your home folder
+
+.. code-block:: sh
+
+  cd
+
+and type
+
+.. code-block:: sh
+
+  <short name> -h
+
+with the short name of the symbolic link, for example ``verifyta-stratego-9``. Again, the command line
+manual of UPPAAL Stratego should now be printed. If so, we are ready to go. Otherwise, look at
+:ref:`installation_problems`.
 
 .. _installation_problems:
 
