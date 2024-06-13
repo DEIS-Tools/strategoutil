@@ -188,11 +188,11 @@ def run_stratego(model_file, query_file="", learning_args=None, verifyta_command
     learning_args = {} if learning_args is None else learning_args
     args = {
         "verifyta": verifyta_command,
-        "model": model_file,
-        "query": query_file,
+        "model": f'"{model_file}"',  # Robust against spaces in path name
+        "query": f'"{query_file}"',
         "config": merge_verifyta_args(learning_args)
     }
-    args_list = [v for v in args.values() if v != ""]
+    args_list = [v for v in args.values() if v != "" and v != "\"\""]
     task = " ".join(args_list)
 
     process = subprocess.Popen(task, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
