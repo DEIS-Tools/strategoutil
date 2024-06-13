@@ -122,6 +122,14 @@ x:
                         "--eval-runs 100 --max-iterations 30 --filter 0")
             mock_Popen.assert_called_with(expected, **self.POPEN_KWARGS)
 
+    def test_run_stratego_with_space_in_path(self):
+        with mock.patch("strategoutil.subprocess.Popen") as mock_Popen:
+            sutil.run_stratego("folder with spaces/model.xml", verifyta_command="$HOME/verifyta")
+            # Below is the expected result with Popen default shell.
+            expected = "$HOME/verifyta \"folder with spaces/model.xml\""
+
+            mock_Popen.assert_called_with(expected, **self.POPEN_KWARGS)
+            
     def test_successful_result_true(self):
         verifyta_output = """
         -- Formula is satisfied.
