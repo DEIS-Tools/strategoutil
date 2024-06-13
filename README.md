@@ -3,7 +3,7 @@ Collection of utility functions and classes to interface [UPPAAL Stratego](https
 
 ## Repo status
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-[![badge](https://github.com/DEIS-Tools/strategoutil/workflows/build/badge.svg)](https://github.com/DEIS-Tools/strategoutil/actions)
+[![badge](https://github.com/DEIS-Tools/strategoutil/actions/workflows/build.yml/badge.svg)](https://github.com/DEIS-Tools/strategoutil/actions)
 [![Documentation Status](https://readthedocs.org/projects/strategoutil/badge/?version=latest)](https://strategoutil.readthedocs.io/en/latest/?badge=latest)
 
 See which OS and Python versions combinations are supported [here](https://github.com/DEIS-Tools/strategoutil/actions).
