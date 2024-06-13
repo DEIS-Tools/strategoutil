@@ -93,7 +93,7 @@ x:
         with mock.patch("strategoutil.subprocess.Popen") as mock_Popen:
             sutil.run_stratego("model.xml", verifyta_command="$HOME/verifyta")
             # Below is the expected result with Popen default shell.
-            expected = "$HOME/verifyta model.xml"
+            expected = "$HOME/verifyta \"model.xml\""
 
             mock_Popen.assert_called_with(expected, **self.POPEN_KWARGS)
 
@@ -101,7 +101,7 @@ x:
         with mock.patch("strategoutil.subprocess.Popen") as mock_Popen:
             sutil.run_stratego("model.xml", "query.q")
             # Below is the expected result with Popen default shell.
-            expected = "verifyta model.xml query.q"
+            expected = "verifyta \"model.xml\" \"query.q\""
             mock_Popen.assert_called_with(expected, **self.POPEN_KWARGS)
 
     def test_run_stratego_all_variables(self):
@@ -117,7 +117,7 @@ x:
             }
             sutil.run_stratego("model.xml", "query.q", learning_args, "verifyta")
             # Below is the expected result with Popen default shell.
-            expected = ("verifyta model.xml query.q --learning-method 4 "
+            expected = ("verifyta \"model.xml\" \"query.q\" --learning-method 4 "
                         "--good-runs 100 --total-runs 100 --runs-pr-state 100 "
                         "--eval-runs 100 --max-iterations 30 --filter 0")
             mock_Popen.assert_called_with(expected, **self.POPEN_KWARGS)
