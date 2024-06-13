@@ -198,6 +198,10 @@ def run_stratego(model_file, query_file="", learning_args=None, verifyta_command
     process = subprocess.Popen(task, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     result = process.communicate()
     result = [r.decode("utf-8") for r in result]
+
+    # Throw error if stderr is nonempty.
+    if len(result[1]) > 0:
+        raise RuntimeError("Uppaal finished with the following error message:\n" + result[1])
     return result
 
 
