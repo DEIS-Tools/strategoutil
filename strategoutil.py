@@ -201,7 +201,9 @@ def run_stratego(model_file, query_file="", learning_args=None, verifyta_command
 
     # Throw error if stderr is nonempty.
     if len(result[1]) > 0:
-        raise RuntimeError("Uppaal finished with the following error message:\n" + result[1])
+        raise RuntimeError("Uppaal finished with the following error message:\n\n" + result[1] +
+                           "\n" +
+                           "You can run the following command in a terminal to recreate the error:\n\n" + task)
     return result
 
 
